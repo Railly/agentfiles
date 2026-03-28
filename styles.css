@@ -711,8 +711,8 @@
 
 /* Dashboard panel */
 .as-panel-dashboard {
-	grid-column: 3 / -1;
-	/* spans list + handle + detail */
+	grid-column: 2 / -1;
+	/* spans handles + list + detail when they are hidden */
 	overflow-y: auto;
 	padding: 12px 28px 20px;
 	container-type: inline-size;

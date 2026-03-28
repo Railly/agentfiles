@@ -22,6 +22,8 @@ export class AgentfilesView extends ItemView {
 	private listEl!: HTMLElement;
 	private detailEl!: HTMLElement;
 	private dashboardEl!: HTMLElement;
+	private resizeHandle1!: HTMLElement;
+	private resizeHandle2!: HTMLElement;
 
 	private isDashboard = false;
 	private updateRef: ReturnType<typeof this.store.on> | null = null;
@@ -56,9 +58,9 @@ export class AgentfilesView extends ItemView {
 		container.addClass("as-container");
 
 		this.sidebarEl = container.createDiv("as-panel as-panel-sidebar");
-		this.createResizeHandle(container, this.sidebarEl, "--as-sidebar-width", 120, 400);
+		this.resizeHandle1 = this.createResizeHandle(container, this.sidebarEl, "--as-sidebar-width", 120, 400);
 		this.listEl = container.createDiv("as-panel as-panel-list");
-		this.createResizeHandle(container, this.listEl, "--as-list-width", 180, 600);
+		this.resizeHandle2 = this.createResizeHandle(container, this.listEl, "--as-list-width", 180, 600);
 		this.detailEl = container.createDiv("as-panel as-panel-detail");
 		this.dashboardEl = container.createDiv("as-panel as-panel-dashboard");
 		this.dashboardEl.style.display = "none";
@@ -88,7 +90,7 @@ export class AgentfilesView extends ItemView {
 		cssVar: string,
 		min: number,
 		max: number
-	): void {
+	): HTMLElement {
 		const handle = container.createDiv("as-resize-handle");
 		let startX = 0;
 		let startWidth = 0;
@@ -112,17 +114,23 @@ export class AgentfilesView extends ItemView {
 			document.addEventListener("mousemove", onMouseMove);
 			document.addEventListener("mouseup", onMouseUp);
 		});
+
+		return handle;
 	}
 
 	toggleDashboard(): void {
 		this.isDashboard = !this.isDashboard;
 		if (this.isDashboard) {
+			this.resizeHandle1.style.display = "none";
 			this.listEl.style.display = "none";
+			this.resizeHandle2.style.display = "none";
 			this.detailEl.style.display = "none";
 			this.dashboardEl.style.display = "block";
 			this.dashboardPanel.render();
 		} else {
+			this.resizeHandle1.style.display = "";
 			this.listEl.style.display = "";
+			this.resizeHandle2.style.display = "";
 			this.detailEl.style.display = "";
 			this.dashboardEl.style.display = "none";
 		}
