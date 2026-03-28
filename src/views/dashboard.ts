@@ -81,9 +81,12 @@ export class DashboardPanel {
 
 			if (data.stats) this.renderOverview(data.stats, data.health);
 			if (data.stats) this.renderTopSkills(data.stats);
-			if (data.health) this.renderHealth(data.health);
+			if (data.health || data.context) {
+				const row = this.containerEl.createDiv("as-dash-row");
+				if (data.health) this.renderHealth(data.health, row);
+				if (data.context) this.renderContext(data.context, row);
+			}
 			if (data.burn) this.renderBurn(data.burn);
-			if (data.context) this.renderContext(data.context);
 			if (data.health) this.renderStale(data.health);
 		}, 10);
 	}
@@ -145,8 +148,8 @@ export class DashboardPanel {
 		}
 	}
 
-	private renderHealth(health: HealthJson): void {
-		const section = this.containerEl.createDiv("as-dash-section");
+	private renderHealth(health: HealthJson, parent?: HTMLElement): void {
+		const section = (parent || this.containerEl).createDiv("as-dash-section");
 		section.createDiv({ cls: "as-dash-title", text: "Health" });
 
 		const total = health.usage.used_30d + health.usage.unused_30d;
@@ -208,8 +211,8 @@ export class DashboardPanel {
 		}
 	}
 
-	private renderContext(ctx: ContextJson): void {
-		const section = this.containerEl.createDiv("as-dash-section");
+	private renderContext(ctx: ContextJson, parent?: HTMLElement): void {
+		const section = (parent || this.containerEl).createDiv("as-dash-section");
 		section.createDiv({ cls: "as-dash-title", text: "Context Tax" });
 
 		const total = ctx.always_loaded.total_tokens;

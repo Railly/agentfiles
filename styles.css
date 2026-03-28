@@ -612,6 +612,7 @@
 	grid-column: 2 / -1;
 	overflow-y: auto;
 	padding: 12px 28px 20px;
+	container-type: inline-size;
 }
 
 .as-dash-loading {
@@ -678,6 +679,22 @@
 	background: var(--code-background);
 	padding: 4px 10px;
 	border-radius: var(--radius-s);
+}
+
+/* Dashboard layout */
+.as-dash-row {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 20px;
+}
+
+@container (max-width: 600px) {
+	.as-dash-row {
+		grid-template-columns: 1fr;
+	}
+	.as-dash-stats {
+		grid-template-columns: repeat(2, 1fr) !important;
+	}
 }
 
 /* Dashboard sections */
