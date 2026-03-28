@@ -1,5 +1,5 @@
 import { setIcon } from "obsidian";
-import { execSync } from "child_process";
+import { isSkillkitAvailable, runSkillkitJson } from "../skillkit";
 
 interface StatsJson {
 	period: { days: number };
@@ -41,33 +41,11 @@ interface DashboardData {
 	context: ContextJson | null;
 }
 
-function runSkillkit(cmd: string): unknown | null {
-	try {
-		const out = execSync(`skillkit ${cmd} --json`, {
-			encoding: "utf-8",
-			timeout: 15000,
-			env: { ...process.env, NO_COLOR: "1" },
-		}).trim();
-		const jsonStart = out.indexOf("{");
-		const jsonStartArr = out.indexOf("[");
-		const start = jsonStart === -1 ? jsonStartArr : jsonStartArr === -1 ? jsonStart : Math.min(jsonStart, jsonStartArr);
-		if (start === -1) return null;
-		return JSON.parse(out.slice(start));
-	} catch { return null; }
-}
-
-function skillkitInstalled(): boolean {
-	try {
-		execSync("skillkit version", { encoding: "utf-8", timeout: 3000, stdio: "pipe" });
-		return true;
-	} catch { return false; }
-}
-
 function loadData(): DashboardData {
-	const stats = runSkillkit("stats") as StatsJson | null;
-	const health = runSkillkit("health") as HealthJson | null;
-	const burnArr = runSkillkit("burn") as BurnAgent[] | null;
-	const context = runSkillkit("context") as ContextJson | null;
+	const stats = runSkillkitJson("stats") as StatsJson | null;
+	const health = runSkillkitJson("health") as HealthJson | null;
+	const burnArr = runSkillkitJson("burn") as BurnAgent[] | null;
+	const context = runSkillkitJson("context") as ContextJson | null;
 
 	return {
 		stats,
@@ -88,7 +66,7 @@ export class DashboardPanel {
 		this.containerEl.empty();
 		this.containerEl.addClass("as-dashboard");
 
-		if (!skillkitInstalled()) {
+		if (!isSkillkitAvailable()) {
 			this.renderNoSkillkit();
 			return;
 		}

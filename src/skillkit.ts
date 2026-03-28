@@ -1,4 +1,35 @@
 import { execSync } from "child_process";
+import { existsSync, readdirSync } from "fs";
+import { join } from "path";
+import { homedir } from "os";
+
+const HOME = homedir();
+const DB_PATH = join(HOME, ".skillkit", "analytics.db");
+
+function findSkillkitBin(): string | null {
+	const direct = [
+		"/usr/local/bin/skillkit",
+		"/opt/homebrew/bin/skillkit",
+		join(HOME, ".local", "bin", "skillkit"),
+	];
+	for (const p of direct) {
+		if (existsSync(p)) return p;
+	}
+	const nvmDir = join(HOME, ".nvm", "versions", "node");
+	try {
+		for (const d of readdirSync(nvmDir)) {
+			const p = join(nvmDir, d, "bin", "skillkit");
+			if (existsSync(p)) return p;
+		}
+	} catch {}
+	return null;
+}
+
+let _bin: string | null | undefined;
+function getSkillkitBin(): string | null {
+	if (_bin === undefined) _bin = findSkillkitBin();
+	return _bin;
+}
 
 export interface SkillkitStats {
 	uses: number;
@@ -9,50 +40,56 @@ export interface SkillkitStats {
 }
 
 export function isSkillkitAvailable(): boolean {
+	return getSkillkitBin() !== null || existsSync(DB_PATH);
+}
+
+export function runSkillkitJson(cmd: string): unknown | null {
+	const bin = getSkillkitBin();
+	if (!bin) return null;
 	try {
-		execSync("skillkit version", { encoding: "utf-8", timeout: 3000, stdio: "pipe" });
-		return true;
-	} catch { return false; }
+		const out = execSync(`${bin} ${cmd} --json`, {
+			encoding: "utf-8",
+			timeout: 15000,
+			env: { ...process.env, NO_COLOR: "1" },
+			stdio: ["pipe", "pipe", "pipe"],
+		}).trim();
+		const jsonStart = out.indexOf("{");
+		const jsonStartArr = out.indexOf("[");
+		const start = jsonStart === -1 ? jsonStartArr : jsonStartArr === -1 ? jsonStart : Math.min(jsonStart, jsonStartArr);
+		if (start === -1) return null;
+		return JSON.parse(out.slice(start));
+	} catch { return null; }
 }
 
 export function getSkillkitStats(): Map<string, SkillkitStats> {
 	const stats = new Map<string, SkillkitStats>();
 	if (!isSkillkitAvailable()) return stats;
 
-	try {
-		const raw = execSync("skillkit stats --json", {
-			encoding: "utf-8",
-			timeout: 15000,
-			env: { ...process.env, NO_COLOR: "1" },
-		}).trim();
+	const data = runSkillkitJson("stats") as {
+		top_skills: { name: string; total: number; daily: { date: string; count: number }[] }[];
+	} | null;
 
-		const jsonStart = raw.indexOf("{");
-		if (jsonStart === -1) return stats;
+	if (!data?.top_skills) return stats;
 
-		const data = JSON.parse(raw.slice(jsonStart)) as {
-			top_skills: { name: string; total: number; daily: { date: string; count: number }[] }[];
-		};
+	const now = Date.now();
+	for (const skill of data.top_skills) {
+		const lastDay = skill.daily.length > 0
+			? skill.daily[skill.daily.length - 1]?.date
+			: null;
+		let daysSinceUsed: number | null = null;
 
-		const now = Date.now();
-		for (const skill of data.top_skills || []) {
-			const lastDay = skill.daily.length > 0
-				? skill.daily[skill.daily.length - 1]?.date
-				: null;
-			let daysSinceUsed: number | null = null;
-
-			if (lastDay) {
-				daysSinceUsed = Math.floor((now - new Date(lastDay).getTime()) / (1000 * 60 * 60 * 24));
-			}
-
-			stats.set(skill.name, {
-				uses: skill.total,
-				lastUsed: lastDay || null,
-				daysSinceUsed,
-				isStale: daysSinceUsed !== null && daysSinceUsed > 30,
-				isHeavy: false,
-			});
+		if (lastDay) {
+			daysSinceUsed = Math.floor((now - new Date(lastDay).getTime()) / (1000 * 60 * 60 * 24));
 		}
-	} catch {}
+
+		stats.set(skill.name, {
+			uses: skill.total,
+			lastUsed: lastDay || null,
+			daysSinceUsed,
+			isStale: daysSinceUsed !== null && daysSinceUsed > 30,
+			isHeavy: false,
+		});
+	}
 
 	return stats;
 }
