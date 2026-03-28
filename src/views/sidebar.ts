@@ -24,16 +24,7 @@ export class SidebarPanel {
 		this.containerEl.empty();
 		this.containerEl.addClass("as-sidebar");
 
-		this.renderSection("Library", [
-			{ label: "All Skills", icon: "layers", filter: { kind: "all" } },
-			{
-				label: "Favorites",
-				icon: "star",
-				filter: { kind: "favorites" },
-			},
-		]);
-
-		this.renderDashboardButton();
+		this.renderLibrarySection();
 		this.renderTypeSection();
 		this.renderToolSection();
 		this.renderCollectionSection();
@@ -52,7 +43,7 @@ export class SidebarPanel {
 
 		for (const item of items) {
 			const row = section.createDiv("as-sidebar-item");
-			if (this.isActive(item.filter)) row.addClass("is-active");
+			if (!this.dashboardActive && this.isActive(item.filter)) row.addClass("is-active");
 
 			const iconEl = row.createSpan("as-sidebar-icon");
 			setIcon(iconEl, item.icon);
@@ -66,6 +57,7 @@ export class SidebarPanel {
 			}
 
 			row.addEventListener("click", () => {
+				if (this.dashboardActive) this.onToggleDashboard();
 				this.store.setFilter(item.filter);
 			});
 		}
@@ -108,7 +100,7 @@ export class SidebarPanel {
 		for (const tool of tools) {
 			const filter: SidebarFilter = { kind: "tool", toolId: tool.id };
 			const row = section.createDiv("as-sidebar-item");
-			if (this.isActive(filter)) row.addClass("is-active");
+			if (!this.dashboardActive && this.isActive(filter)) row.addClass("is-active");
 
 			const iconEl = row.createSpan("as-sidebar-icon");
 			if (TOOL_SVGS[tool.id]) {
@@ -123,7 +115,10 @@ export class SidebarPanel {
 				text: String(toolCounts.get(tool.id) || 0),
 			});
 
-			row.addEventListener("click", () => this.store.setFilter(filter));
+			row.addEventListener("click", () => {
+				if (this.dashboardActive) this.onToggleDashboard();
+				this.store.setFilter(filter);
+			});
 		}
 	}
 
@@ -147,26 +142,56 @@ export class SidebarPanel {
 		for (const name of collections) {
 			const filter: SidebarFilter = { kind: "collection", name };
 			const row = section.createDiv("as-sidebar-item");
-			if (this.isActive(filter)) row.addClass("is-active");
+			if (!this.dashboardActive && this.isActive(filter)) row.addClass("is-active");
 
 			const iconEl = row.createSpan("as-sidebar-icon");
 			setIcon(iconEl, "folder");
 			row.createSpan({ cls: "as-sidebar-label", text: name });
 
-			row.addEventListener("click", () => this.store.setFilter(filter));
+			row.addEventListener("click", () => {
+				if (this.dashboardActive) this.onToggleDashboard();
+				this.store.setFilter(filter);
+			});
 		}
 	}
 
-	private renderDashboardButton(): void {
+	private renderLibrarySection(): void {
 		const section = this.containerEl.createDiv("as-sidebar-section");
-		const row = section.createDiv("as-sidebar-item");
-		if (this.dashboardActive) row.addClass("is-active");
+		section.createDiv({ cls: "as-sidebar-title", text: "Library" });
 
-		const iconEl = row.createSpan("as-sidebar-icon");
-		setIcon(iconEl, "bar-chart-2");
-		row.createSpan({ cls: "as-sidebar-label", text: "Dashboard" });
+		const libraryItems: { label: string; icon: string; filter: SidebarFilter }[] = [
+			{ label: "All Skills", icon: "layers", filter: { kind: "all" } },
+			{ label: "Favorites", icon: "star", filter: { kind: "favorites" } },
+		];
 
-		row.addEventListener("click", () => this.onToggleDashboard());
+		for (const item of libraryItems) {
+			const row = section.createDiv("as-sidebar-item");
+			if (!this.dashboardActive && this.isActive(item.filter)) row.addClass("is-active");
+
+			const iconEl = row.createSpan("as-sidebar-icon");
+			setIcon(iconEl, item.icon);
+			row.createSpan({ cls: "as-sidebar-label", text: item.label });
+
+			row.addEventListener("click", () => {
+				if (this.dashboardActive) {
+					this.onToggleDashboard();
+				}
+				this.store.setFilter(item.filter);
+			});
+		}
+
+		const dashRow = section.createDiv("as-sidebar-item");
+		if (this.dashboardActive) dashRow.addClass("is-active");
+
+		const dashIcon = dashRow.createSpan("as-sidebar-icon");
+		setIcon(dashIcon, "bar-chart-2");
+		dashRow.createSpan({ cls: "as-sidebar-label", text: "Dashboard" });
+
+		dashRow.addEventListener("click", () => {
+			if (!this.dashboardActive) {
+				this.onToggleDashboard();
+			}
+		});
 	}
 
 	private renderSkillkitCta(): void {

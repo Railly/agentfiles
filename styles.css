@@ -611,11 +611,7 @@
 .as-panel-dashboard {
 	grid-column: 2 / -1;
 	overflow-y: auto;
-	padding: 20px 28px;
-}
-
-.as-dashboard {
-	max-width: 800px;
+	padding: 0 28px 20px;
 }
 
 .as-dash-loading {
