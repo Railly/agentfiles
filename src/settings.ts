@@ -1,4 +1,5 @@
 import { PluginSettingTab, Setting, type App } from "obsidian";
+import { basename } from "path";
 import { TOOL_CONFIGS } from "./tool-configs";
 import type AgentfilesPlugin from "./main";
 
@@ -43,6 +44,85 @@ export class AgentfilesSettingTab extends PluginSettingTab {
 						}
 					})
 			);
+
+		new Setting(containerEl)
+			.setName("Display names")
+			.setDesc("How skill and command names are displayed in the list")
+			.addDropdown((drop) =>
+				drop
+					.addOptions({
+						auto: "Auto (frontmatter / heading / filename)",
+						filename: "Filename only",
+					})
+					.setValue(this.plugin.settings.namingMode || "auto")
+					.onChange(async (value) => {
+						this.plugin.settings.namingMode = value as "auto" | "filename";
+						await this.plugin.saveSettings();
+						this.plugin.refreshStore();
+					})
+			);
+
+		new Setting(containerEl).setName("Projects").setHeading();
+
+		new Setting(containerEl)
+			.setName("Project directories")
+			.setDesc(
+				"Add project directories to scan for project-level skills, commands, rules, and agents. " +
+				"Depth controls how many levels deep to search for projects."
+			)
+			.addButton((btn) =>
+				btn.setButtonText("Add project").onClick(async () => {
+					const { remote } = require("electron");
+					const result = await remote.dialog.showOpenDialog({
+						properties: ["openDirectory"],
+						title: "Select a project directory",
+					});
+					if (result.canceled || result.filePaths.length === 0) return;
+					const dir = result.filePaths[0];
+					const exists = this.plugin.settings.projectPaths.some(
+						(e) => e.path === dir
+					);
+					if (!exists) {
+						this.plugin.settings.projectPaths.push({ path: dir, depth: 1 });
+						await this.plugin.saveSettings();
+						this.plugin.refreshStore();
+						this.plugin.restartWatcher();
+						this.display();
+					}
+				})
+			);
+
+		for (const entry of this.plugin.settings.projectPaths) {
+			new Setting(containerEl)
+				.setName(basename(entry.path))
+				.setDesc(entry.path)
+				.addDropdown((drop) =>
+					drop
+						.addOptions({ "0": "0 (exact)", "1": "1", "2": "2", "3": "3" })
+						.setValue(String(entry.depth))
+						.onChange(async (value) => {
+							entry.depth = parseInt(value);
+							await this.plugin.saveSettings();
+							this.plugin.refreshStore();
+							this.plugin.restartWatcher();
+						})
+				)
+				.addButton((btn) =>
+					btn
+						.setButtonText("Remove")
+						.setWarning()
+						.onClick(async () => {
+							this.plugin.settings.projectPaths =
+								this.plugin.settings.projectPaths.filter(
+									(e) => e.path !== entry.path
+								);
+							await this.plugin.saveSettings();
+							this.plugin.refreshStore();
+							this.plugin.restartWatcher();
+							this.display();
+						})
+				);
+		}
 
 		new Setting(containerEl).setName("Tools").setHeading();
 

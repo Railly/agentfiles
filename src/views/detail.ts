@@ -1,5 +1,7 @@
 import { MarkdownRenderer, Notice, setIcon, type App } from "obsidian";
-import { writeFileSync } from "fs";
+import { writeFileSync, realpathSync, readlinkSync, lstatSync } from "fs";
+import { homedir } from "os";
+import { join } from "path";
 import { shell } from "electron";
 import type { SkillItem, ChopsSettings } from "../types";
 import type { SkillStore } from "../store";
@@ -28,6 +30,45 @@ function formatDate(ms: number): string {
 		day: "numeric",
 		year: "numeric",
 	});
+}
+
+const HOME = homedir();
+
+// Directories under ~ that are commonly symlinked (e.g. OneDrive, iCloud)
+const SHORTABLE_DIRS = ["Documents", "Desktop", "Downloads", "Pictures", "Music", "Movies"];
+
+let _symlinkMap: Map<string, string> | null = null;
+
+function getSymlinkMap(): Map<string, string> {
+	if (_symlinkMap) return _symlinkMap;
+	_symlinkMap = new Map();
+	for (const dir of SHORTABLE_DIRS) {
+		const logical = join(HOME, dir);
+		try {
+			const stat = lstatSync(logical);
+			if (stat.isSymbolicLink()) {
+				const real = realpathSync(logical);
+				// Map the resolved real path back to the short logical path
+				_symlinkMap.set(real, logical);
+			}
+		} catch { /* empty */ }
+	}
+	return _symlinkMap;
+}
+
+function shortenPath(filePath: string): string {
+	// First try to resolve real paths back through known symlinks
+	for (const [real, logical] of getSymlinkMap()) {
+		if (filePath.startsWith(real + "/") || filePath === real) {
+			filePath = logical + filePath.slice(real.length);
+			break;
+		}
+	}
+	// Then shorten HOME prefix to ~
+	if (filePath.startsWith(HOME + "/") || filePath === HOME) {
+		filePath = "~" + filePath.slice(HOME.length);
+	}
+	return filePath;
 }
 
 export class DetailPanel {
@@ -144,6 +185,11 @@ export class DetailPanel {
 		meta.createSpan({ cls: "as-meta-item", text: `~${formatNumber(tokens)} tokens` });
 		meta.createSpan({ cls: "as-meta-item", text: formatDate(item.lastModified) });
 		meta.createSpan({ cls: "as-meta-item as-meta-type", text: item.type });
+
+		const displayPath = shortenPath(item.filePath);
+		const pathEl = toolbar.createDiv("as-detail-path");
+		pathEl.setText(displayPath);
+		pathEl.title = item.filePath;
 
 		if (item.usage && item.usage.uses > 0) {
 			const usageMeta = toolbar.createDiv("as-detail-usage-bar");

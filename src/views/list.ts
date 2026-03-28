@@ -10,6 +10,11 @@ export class ListPanel {
 	private onSelect: (item: SkillItem) => void;
 	private selectedId: string | null = null;
 
+	private inputEl: HTMLInputElement | null = null;
+	private deepToggleEl: HTMLElement | null = null;
+	private listContainerEl: HTMLElement | null = null;
+	private initialized = false;
+
 	constructor(
 		containerEl: HTMLElement,
 		store: SkillStore,
@@ -25,33 +30,90 @@ export class ListPanel {
 	}
 
 	render(): void {
-		this.containerEl.empty();
 		this.containerEl.addClass("as-list");
 
-		const searchContainer = this.containerEl.createDiv("as-search");
-		const input = searchContainer.createEl("input", {
-			type: "text",
-			placeholder: "Search skills...",
-			cls: "as-search-input",
-		});
-		input.value = this.store.searchQuery;
-		input.addEventListener("input", () => {
-			this.store.setSearch(input.value);
-		});
+		if (!this.initialized) {
+			this.containerEl.empty();
+			const searchContainer = this.containerEl.createDiv("as-search");
+			this.inputEl = searchContainer.createEl("input", {
+				type: "text",
+				placeholder: this.getSearchPlaceholder(),
+				cls: "as-search-input",
+			});
+			this.inputEl.value = this.store.searchQuery;
+			this.inputEl.addEventListener("input", () => {
+				this.store.setSearch(this.inputEl!.value);
+			});
 
-		const listContainer = this.containerEl.createDiv("as-list-items");
+			this.deepToggleEl = searchContainer.createEl("button", {
+				cls: "as-deep-toggle",
+				attr: {
+					"aria-label": "Toggle deep search (search file contents)",
+				},
+			});
+			setIcon(this.deepToggleEl, "search-code");
+			this.deepToggleEl.addEventListener("click", () => {
+				this.store.setDeepSearch(!this.store.deepSearch);
+			});
+
+			this.listContainerEl = this.containerEl.createDiv("as-list-items");
+			this.initialized = true;
+		}
+
+		// Update placeholder and deep search state
+		this.inputEl!.placeholder = this.getSearchPlaceholder();
+		this.deepToggleEl!.toggleClass("is-active", this.store.deepSearch);
+		this.deepToggleEl!.setAttribute(
+			"aria-label",
+			this.store.deepSearch ? "Deep search ON (searching file contents)" : "Deep search OFF (listing fields only)"
+		);
+
+		// Re-render only the list items
+		this.renderItems();
+	}
+
+	private renderItems(): void {
+		const container = this.listContainerEl!;
+		container.empty();
+
 		const items = this.store.filteredItems;
 
 		if (items.length === 0) {
-			listContainer.createDiv({
+			container.createDiv({
 				cls: "as-list-empty",
-				text: "No skills found",
+				text: "No agent files found",
 			});
 			return;
 		}
 
 		for (const item of items) {
-			this.renderCard(listContainer, item);
+			this.renderCard(container, item);
+		}
+	}
+
+	private getSearchPlaceholder(): string {
+		const filter = this.store.filter;
+		switch (filter.kind) {
+			case "type": {
+				const labels: Record<string, string> = {
+					skill: "skills", command: "commands", agent: "agents", rule: "rules", memory: "memories",
+				};
+				return `Search ${labels[filter.type] || filter.type}...`;
+			}
+			case "tool": {
+				const tool = TOOL_CONFIGS.find((t) => t.id === filter.toolId);
+				return `Search ${tool?.name || filter.toolId} files...`;
+			}
+			case "favorites":
+				return "Search favorites...";
+			case "scope":
+				return `Search ${filter.scope} agent files...`;
+			case "project":
+				return `Search project files...`;
+			case "collection":
+				return `Search ${filter.name}...`;
+			default:
+				return "Search agent files...";
 		}
 	}
 
@@ -61,6 +123,13 @@ export class ListPanel {
 
 		const header = card.createDiv("as-skill-header");
 		header.createSpan({ cls: "as-skill-name", text: item.name });
+
+		if (item.scope === "project" && item.projectName) {
+			header.createSpan({ cls: "as-project-badge", text: item.projectName });
+		} else if (item.scope === "global") {
+			const globeEl = header.createSpan("as-global-icon");
+			setIcon(globeEl, "globe");
+		}
 
 		if (item.isFavorite) {
 			const star = header.createSpan("as-skill-star");

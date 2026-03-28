@@ -56,12 +56,14 @@ export class AgentfilesView extends ItemView {
 		container.addClass("as-container");
 
 		this.sidebarEl = container.createDiv("as-panel as-panel-sidebar");
+		this.createResizeHandle(container, this.sidebarEl, "--as-sidebar-width", 120, 400);
 		this.listEl = container.createDiv("as-panel as-panel-list");
+		this.createResizeHandle(container, this.listEl, "--as-list-width", 180, 600);
 		this.detailEl = container.createDiv("as-panel as-panel-detail");
 		this.dashboardEl = container.createDiv("as-panel as-panel-dashboard");
 		this.dashboardEl.style.display = "none";
 
-		this.sidebarPanel = new SidebarPanel(this.sidebarEl, this.store, () =>
+		this.sidebarPanel = new SidebarPanel(this.sidebarEl, this.store, this.settings, () =>
 			this.toggleDashboard()
 		);
 		this.listPanel = new ListPanel(this.listEl, this.store, (item: SkillItem) =>
@@ -78,6 +80,38 @@ export class AgentfilesView extends ItemView {
 
 		this.updateRef = this.store.on("updated", () => this.renderAll());
 		this.renderAll();
+	}
+
+	private createResizeHandle(
+		container: HTMLElement,
+		panel: HTMLElement,
+		cssVar: string,
+		min: number,
+		max: number
+	): void {
+		const handle = container.createDiv("as-resize-handle");
+		let startX = 0;
+		let startWidth = 0;
+
+		const onMouseMove = (e: MouseEvent) => {
+			const newWidth = Math.min(max, Math.max(min, startWidth + (e.clientX - startX)));
+			container.style.setProperty(cssVar, `${newWidth}px`);
+		};
+
+		const onMouseUp = () => {
+			handle.removeClass("is-dragging");
+			document.removeEventListener("mousemove", onMouseMove);
+			document.removeEventListener("mouseup", onMouseUp);
+		};
+
+		handle.addEventListener("mousedown", (e: MouseEvent) => {
+			e.preventDefault();
+			startX = e.clientX;
+			startWidth = panel.offsetWidth;
+			handle.addClass("is-dragging");
+			document.addEventListener("mousemove", onMouseMove);
+			document.addEventListener("mouseup", onMouseUp);
+		});
 	}
 
 	toggleDashboard(): void {

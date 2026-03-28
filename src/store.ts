@@ -1,4 +1,5 @@
 import { Events } from "obsidian";
+import { basename } from "path";
 import type { SkillItem, SidebarFilter, ChopsSettings } from "./types";
 import { scanAll } from "./scanner";
 import { getSkillkitStats, isSkillkitAvailable } from "./skillkit";
@@ -7,6 +8,7 @@ export class SkillStore extends Events {
 	private items: Map<string, SkillItem> = new Map();
 	private _filter: SidebarFilter = { kind: "all" };
 	private _searchQuery = "";
+	private _deepSearch = false;
 
 	get filter(): SidebarFilter {
 		return this._filter;
@@ -14,6 +16,10 @@ export class SkillStore extends Events {
 
 	get searchQuery(): string {
 		return this._searchQuery;
+	}
+
+	get deepSearch(): boolean {
+		return this._deepSearch;
 	}
 
 	get allItems(): SkillItem[] {
@@ -40,16 +46,31 @@ export class SkillStore extends Events {
 					i.collections.includes(this._filter.name)
 				);
 				break;
+			case "scope":
+				result = result.filter((i) => i.scope === this._filter.scope);
+				break;
+			case "project":
+				result = result.filter(
+					(i) =>
+						i.scope === "project" &&
+						i.projectDir === this._filter.projectPath
+				);
+				break;
 		}
 
 		if (this._searchQuery) {
 			const q = this._searchQuery.toLowerCase();
-			result = result.filter(
-				(i) =>
+			result = result.filter((i) => {
+				if (
 					i.name.toLowerCase().includes(q) ||
 					i.description.toLowerCase().includes(q) ||
-					i.content.toLowerCase().includes(q)
-			);
+					(i.projectName && i.projectName.toLowerCase().includes(q)) ||
+					i.type.includes(q)
+				) {
+					return true;
+				}
+				return this._deepSearch && i.content.toLowerCase().includes(q);
+			});
 		}
 
 		return result.sort((a, b) => a.name.localeCompare(b.name));
@@ -103,6 +124,13 @@ export class SkillStore extends Events {
 		this.trigger("updated");
 	}
 
+	setDeepSearch(enabled: boolean): void {
+		this._deepSearch = enabled;
+		if (this._searchQuery) {
+			this.trigger("updated");
+		}
+	}
+
 	toggleFavorite(id: string, settings: ChopsSettings): void {
 		const item = this.items.get(id);
 		if (!item) return;
@@ -129,6 +157,34 @@ export class SkillStore extends Events {
 		const counts = new Map<string, number>();
 		for (const item of this.items.values()) {
 			counts.set(item.type, (counts.get(item.type) || 0) + 1);
+		}
+		return counts;
+	}
+
+	getScopeCounts(): { global: number; project: number } {
+		let global = 0;
+		let project = 0;
+		for (const item of this.items.values()) {
+			if (item.scope === "project") project++;
+			else global++;
+		}
+		return { global, project };
+	}
+
+	getProjectCounts(): Map<string, { name: string; count: number }> {
+		const counts = new Map<string, { name: string; count: number }>();
+		for (const item of this.items.values()) {
+			if (item.scope === "project" && item.projectDir) {
+				const existing = counts.get(item.projectDir);
+				if (existing) {
+					existing.count++;
+				} else {
+					counts.set(item.projectDir, {
+						name: item.projectName || basename(item.projectDir),
+						count: 1,
+					});
+				}
+			}
 		}
 		return counts;
 	}

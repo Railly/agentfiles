@@ -50,7 +50,7 @@ export default class AgentfilesPlugin extends Plugin {
 		this.watcher = new SkillWatcher(this.settings.watchDebounceMs, () =>
 			this.refreshStore()
 		);
-		this.watcher.watchPaths(getWatchPaths());
+		this.watcher.watchPaths(getWatchPaths(this.settings));
 	}
 
 	stopWatcher(): void {
@@ -77,7 +77,20 @@ export default class AgentfilesPlugin extends Plugin {
 	}
 
 	async loadSettings(): Promise<void> {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+		const data = await this.loadData();
+		this.settings = Object.assign({}, DEFAULT_SETTINGS, data);
+
+		// Migrate projectPaths from string[] to ProjectPathEntry[]
+		if (
+			Array.isArray(this.settings.projectPaths) &&
+			this.settings.projectPaths.length > 0 &&
+			typeof this.settings.projectPaths[0] === "string"
+		) {
+			this.settings.projectPaths = (this.settings.projectPaths as unknown as string[]).map(
+				(p) => ({ path: p, depth: 1 })
+			);
+			await this.saveSettings();
+		}
 	}
 
 	async saveSettings(): Promise<void> {

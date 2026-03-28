@@ -3,17 +3,19 @@ import { shell } from "electron";
 import { TOOL_CONFIGS } from "../tool-configs";
 import { TOOL_SVGS, renderToolIcon } from "../tool-icons";
 import type { SkillStore } from "../store";
-import type { SidebarFilter } from "../types";
+import type { SidebarFilter, ChopsSettings } from "../types";
 
 export class SidebarPanel {
 	private containerEl: HTMLElement;
 	private store: SkillStore;
+	private settings: ChopsSettings;
 	private onToggleDashboard: () => void;
 	private dashboardActive = false;
 
-	constructor(containerEl: HTMLElement, store: SkillStore, onToggleDashboard: () => void) {
+	constructor(containerEl: HTMLElement, store: SkillStore, settings: ChopsSettings, onToggleDashboard: () => void) {
 		this.containerEl = containerEl;
 		this.store = store;
+		this.settings = settings;
 		this.onToggleDashboard = onToggleDashboard;
 	}
 
@@ -26,6 +28,8 @@ export class SidebarPanel {
 		this.containerEl.addClass("as-sidebar");
 
 		this.renderLibrarySection();
+		this.renderScopeSection();
+		this.renderProjectSection();
 		this.renderTypeSection();
 		this.renderToolSection();
 		this.renderCollectionSection();
@@ -161,7 +165,7 @@ export class SidebarPanel {
 		section.createDiv({ cls: "as-sidebar-title", text: "Library" });
 
 		const libraryItems: { label: string; icon: string; filter: SidebarFilter }[] = [
-			{ label: "All Skills", icon: "layers", filter: { kind: "all" } },
+			{ label: "All Agent Files", icon: "layers", filter: { kind: "all" } },
 			{ label: "Favorites", icon: "star", filter: { kind: "favorites" } },
 		];
 
@@ -195,6 +199,47 @@ export class SidebarPanel {
 		});
 	}
 
+	private renderScopeSection(): void {
+		const counts = this.store.getScopeCounts();
+		if (counts.project === 0) return;
+
+		this.renderSection("Scope", [
+			{
+				label: "Global",
+				icon: "globe",
+				filter: { kind: "scope", scope: "global" },
+				count: counts.global,
+			},
+			{
+				label: "Project",
+				icon: "folder-git-2",
+				filter: { kind: "scope", scope: "project" },
+				count: counts.project,
+			},
+		]);
+	}
+
+	private renderProjectSection(): void {
+		if (this.settings.projectPaths.length === 0) return;
+		const projectCounts = this.store.getProjectCounts();
+		if (projectCounts.size === 0) return;
+
+		const items: { label: string; icon: string; filter: SidebarFilter; count?: number }[] = [];
+		for (const [dir, { name, count }] of projectCounts) {
+			items.push({
+				label: name,
+				icon: "git-branch",
+				filter: { kind: "project", projectPath: dir },
+				count,
+			});
+		}
+
+		items.sort((a, b) => a.label.localeCompare(b.label));
+		if (items.length > 0) {
+			this.renderSection("Projects", items);
+		}
+	}
+
 	private renderSkillkitCta(): void {
 		const cta = this.containerEl.createDiv("as-skillkit-cta");
 		const iconEl = cta.createDiv("as-skillkit-icon");
@@ -226,6 +271,10 @@ export class SidebarPanel {
 			return current.type === filter.type;
 		if (current.kind === "collection" && filter.kind === "collection")
 			return current.name === filter.name;
+		if (current.kind === "scope" && filter.kind === "scope")
+			return current.scope === filter.scope;
+		if (current.kind === "project" && filter.kind === "project")
+			return current.projectPath === filter.projectPath;
 		return true;
 	}
 }
