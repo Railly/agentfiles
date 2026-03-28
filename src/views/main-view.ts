@@ -24,6 +24,7 @@ export class AgentfilesView extends ItemView {
 	private dashboardEl!: HTMLElement;
 
 	private isDashboard = false;
+	private updateRef: ReturnType<typeof this.store.on> | null = null;
 
 	constructor(
 		leaf: WorkspaceLeaf,
@@ -49,7 +50,7 @@ export class AgentfilesView extends ItemView {
 		return "cpu";
 	}
 
-	async onOpen(): Promise<void> {
+	onOpen(): void {
 		const container = this.contentEl;
 		container.empty();
 		container.addClass("as-container");
@@ -63,7 +64,7 @@ export class AgentfilesView extends ItemView {
 		this.sidebarPanel = new SidebarPanel(this.sidebarEl, this.store, () =>
 			this.toggleDashboard()
 		);
-		this.listPanel = new ListPanel(this.listEl, this.store, (item) =>
+		this.listPanel = new ListPanel(this.listEl, this.store, (item: SkillItem) =>
 			this.onSelectItem(item)
 		);
 		this.detailPanel = new DetailPanel(
@@ -75,7 +76,7 @@ export class AgentfilesView extends ItemView {
 		);
 		this.dashboardPanel = new DashboardPanel(this.dashboardEl);
 
-		this.store.on("updated", () => this.renderAll());
+		this.updateRef = this.store.on("updated", () => this.renderAll());
 		this.renderAll();
 	}
 
@@ -114,7 +115,9 @@ export class AgentfilesView extends ItemView {
 		this.detailPanel.show(item);
 	}
 
-	async onClose(): Promise<void> {
-		this.store.offref(this.store.on("updated", () => {}));
+	onClose(): void {
+		if (this.updateRef) {
+			this.store.offref(this.updateRef);
+		}
 	}
 }

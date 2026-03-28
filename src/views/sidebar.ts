@@ -1,4 +1,5 @@
 import { setIcon } from "obsidian";
+import { shell } from "electron";
 import { TOOL_CONFIGS } from "../tool-configs";
 import { TOOL_SVGS, renderToolIcon } from "../tool-icons";
 import type { SkillStore } from "../store";
@@ -212,8 +213,7 @@ export class SidebarPanel {
 		});
 		link.addEventListener("click", (e) => {
 			e.preventDefault();
-			const { shell } = require("electron");
-			shell.openExternal("https://www.npmjs.com/package/skillkit");
+			void shell.openExternal("https://www.npmjs.com/package/skillkit");
 		});
 	}
 

@@ -26,8 +26,8 @@ export default class AgentfilesPlugin extends Plugin {
 		this.addRibbonIcon("cpu", "Agentfiles", () => this.activateView());
 
 		this.addCommand({
-			id: "open-agentfiles",
-			name: "Open Agentfiles",
+			id: "open",
+			name: "Open",
 			callback: () => this.activateView(),
 		});
 

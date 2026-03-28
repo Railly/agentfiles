@@ -18,7 +18,7 @@ function buildPath(): string {
 		for (const d of readdirSync(nvmDir)) {
 			extra.push(join(nvmDir, d, "bin"));
 		}
-	} catch {}
+	} catch { /* empty */ }
 	return [...extra, process.env.PATH || ""].join(":");
 }
 
@@ -37,7 +37,7 @@ function findSkillkitBin(): string | null {
 			const p = join(nvmDir, d, "bin", "skillkit");
 			if (existsSync(p)) return p;
 		}
-	} catch {}
+	} catch { /* empty */ }
 	return null;
 }
 
@@ -74,7 +74,7 @@ export function runSkillkitJson(cmd: string): unknown | null {
 		const start = jsonStart === -1 ? jsonStartArr : jsonStartArr === -1 ? jsonStart : Math.min(jsonStart, jsonStartArr);
 		if (start === -1) return null;
 		return JSON.parse(out.slice(start));
-	} catch { return null; }
+	} catch { /* empty */ return null; }
 }
 
 export function getSkillkitStats(): Map<string, SkillkitStats> {

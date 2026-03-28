@@ -28,7 +28,7 @@ function cliExists(name: string): boolean {
 		for (const d of readdirSync(nvmDir)) {
 			if (existsSync(join(nvmDir, d, "bin", name))) return true;
 		}
-	} catch {}
+	} catch { /* empty */ }
 	return false;
 }
 

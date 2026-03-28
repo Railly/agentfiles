@@ -17,7 +17,7 @@ export class SkillWatcher {
 			try {
 				const w = watch(p, { recursive: true }, () => this.scheduleUpdate());
 				this.watchers.push(w);
-			} catch {}
+			} catch { /* empty */ }
 		}
 	}
 
@@ -37,7 +37,7 @@ export class SkillWatcher {
 		for (const w of this.watchers) {
 			try {
 				w.close();
-			} catch {}
+			} catch { /* empty */ }
 		}
 		this.watchers = [];
 	}

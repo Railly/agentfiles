@@ -60,7 +60,7 @@ export class ListPanel {
 		if (item.id === this.selectedId) card.addClass("is-selected");
 
 		const header = card.createDiv("as-skill-header");
-		const nameEl = header.createSpan({ cls: "as-skill-name", text: item.name });
+		header.createSpan({ cls: "as-skill-name", text: item.name });
 
 		if (item.isFavorite) {
 			const star = header.createSpan("as-skill-star");
@@ -79,7 +79,7 @@ export class ListPanel {
 
 		const meta = card.createDiv("as-skill-meta");
 
-		const typeTag = meta.createSpan({
+		meta.createSpan({
 			cls: `as-type-tag as-type-${item.type}`,
 			text: item.type,
 		});

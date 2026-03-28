@@ -2,7 +2,6 @@ import {
 	existsSync,
 	readdirSync,
 	readFileSync,
-	lstatSync,
 	realpathSync,
 	statSync,
 } from "fs";
@@ -39,7 +38,7 @@ function parseFrontmatter(raw: string): {
 			frontmatter: typeof parsed === "object" && parsed ? parsed : {},
 			content: match[2],
 		};
-	} catch {
+	} catch { /* empty */
 		return { frontmatter: {}, content: raw };
 	}
 }
@@ -155,7 +154,7 @@ function parseSkillFile(
 		let realPath: string;
 		try {
 			realPath = realpathSync(filePath);
-		} catch {
+		} catch { /* empty */
 			realPath = filePath;
 		}
 
@@ -175,7 +174,7 @@ function parseSkillFile(
 			isFavorite: false,
 			collections: [],
 		};
-	} catch {
+	} catch { /* empty */
 		return null;
 	}
 }

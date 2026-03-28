@@ -1,5 +1,6 @@
-import { MarkdownRenderer, setIcon, Component } from "obsidian";
+import { MarkdownRenderer, Notice, setIcon, type App } from "obsidian";
 import { writeFileSync } from "fs";
+import { shell } from "electron";
 import type { SkillItem, ChopsSettings } from "../types";
 import type { SkillStore } from "../store";
 import { TOOL_CONFIGS } from "../tool-configs";
@@ -36,20 +37,20 @@ export class DetailPanel {
 	private saveSettings: () => Promise<void>;
 	private currentItem: SkillItem | null = null;
 	private isEditing = false;
-	private component: Component;
+	private app: App;
 
 	constructor(
 		containerEl: HTMLElement,
 		store: SkillStore,
 		settings: ChopsSettings,
 		saveSettings: () => Promise<void>,
-		component: Component
+		view: { app: App }
 	) {
 		this.containerEl = containerEl;
 		this.store = store;
 		this.settings = settings;
 		this.saveSettings = saveSettings;
-		this.component = component;
+		this.app = view.app;
 	}
 
 	show(item: SkillItem): void {
@@ -111,7 +112,7 @@ export class DetailPanel {
 		setIcon(favBtn, item.isFavorite ? "star" : "star-off");
 		favBtn.addEventListener("click", () => {
 			this.store.toggleFavorite(item.id, this.settings);
-			this.saveSettings();
+			void this.saveSettings();
 			this.render();
 		});
 
@@ -131,7 +132,6 @@ export class DetailPanel {
 		});
 		setIcon(openBtn, "folder-open");
 		openBtn.addEventListener("click", () => {
-			const { shell } = require("electron");
 			shell.showItemInFolder(item.filePath);
 		});
 
@@ -178,11 +178,9 @@ export class DetailPanel {
 				typeof value === "object" ? JSON.stringify(value) : String(value);
 
 			if (valStr.length > 200) {
-				const valEl = prop.createDiv({ cls: "as-fm-value-long" });
-				valEl.setText(valStr);
+				prop.createDiv({ cls: "as-fm-value-long", text: valStr });
 			} else {
-				const valEl = prop.createSpan({ cls: "as-fm-value" });
-				valEl.setText(valStr);
+				prop.createSpan({ cls: "as-fm-value", text: valStr });
 			}
 		}
 	}
@@ -191,12 +189,12 @@ export class DetailPanel {
 		const body = this.containerEl.createDiv("as-detail-body");
 		this.renderFrontmatter(body, item);
 		const previewEl = body.createDiv("as-detail-preview markdown-rendered");
-		MarkdownRenderer.render(
-			(this.component as any).app || (globalThis as any).app,
+		void MarkdownRenderer.render(
+			this.app,
 			item.content,
 			previewEl,
 			item.filePath,
-			this.component
+			this
 		);
 	}
 
@@ -241,10 +239,8 @@ export class DetailPanel {
 		try {
 			writeFileSync(item.filePath, content, "utf-8");
 			item.content = content;
-			const { Notice } = require("obsidian");
 			new Notice(`Saved ${item.name}`);
 		} catch (e: unknown) {
-			const { Notice } = require("obsidian");
 			new Notice(`Failed to save: ${e instanceof Error ? e.message : String(e)}`);
 		}
 	}

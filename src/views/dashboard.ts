@@ -1,4 +1,5 @@
 import { setIcon } from "obsidian";
+import { shell } from "electron";
 import { isSkillkitAvailable, runSkillkitJson } from "../skillkit";
 
 interface StatsJson {
@@ -106,8 +107,7 @@ export class DashboardPanel {
 		});
 		link.addEventListener("click", (e) => {
 			e.preventDefault();
-			const { shell } = require("electron");
-			shell.openExternal("https://www.npmjs.com/package/@crafter/skillkit");
+			void shell.openExternal("https://www.npmjs.com/package/@crafter/skillkit");
 		});
 	}
 
