@@ -1,5 +1,5 @@
 {
-	"name": "obsidian-agent-skills",
+	"name": "agentfiles",
 	"version": "0.1.0",
 	"description": "AI Skills Manager for Obsidian",
 	"main": "main.js",

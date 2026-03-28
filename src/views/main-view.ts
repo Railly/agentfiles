@@ -5,9 +5,9 @@ import { SidebarPanel } from "./sidebar";
 import { ListPanel } from "./list";
 import { DetailPanel } from "./detail";
 
-export const VIEW_TYPE = "agent-skills-view";
+export const VIEW_TYPE = "agentfiles-view";
 
-export class AgentSkillsView extends ItemView {
+export class AgentfilesView extends ItemView {
 	private store: SkillStore;
 	private settings: ChopsSettings;
 	private saveSettings: () => Promise<void>;
@@ -37,7 +37,7 @@ export class AgentSkillsView extends ItemView {
 	}
 
 	getDisplayText(): string {
-		return "Agent Skills";
+		return "Agentfiles";
 	}
 
 	getIcon(): string {

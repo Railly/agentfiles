@@ -1,9 +1,9 @@
 {
-	"id": "obsidian-agent-skills",
-	"name": "Agent Skills",
+	"id": "agentfiles",
+	"name": "Agentfiles",
 	"version": "0.1.0",
 	"minAppVersion": "1.4.11",
-	"description": "Discover, organize, and edit AI coding agent skills across Claude Code, Cursor, Codex, Windsurf, and more.",
+	"description": "Discover, organize, and edit AI agent skills, commands, and agents across Claude Code, Cursor, Codex, Windsurf, and more.",
 	"author": "Railly Hugo",
 	"authorUrl": "https://railly.dev",
 	"isDesktopOnly": true

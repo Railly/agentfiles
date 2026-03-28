@@ -1,12 +1,12 @@
 import { PluginSettingTab, Setting, type App } from "obsidian";
 import { TOOL_CONFIGS } from "./tool-configs";
 import type { ChopsSettings } from "./types";
-import type AgentSkillsPlugin from "./main";
+import type AgentfilesPlugin from "./main";
 
-export class AgentSkillsSettingTab extends PluginSettingTab {
-	plugin: AgentSkillsPlugin;
+export class AgentfilesSettingTab extends PluginSettingTab {
+	plugin: AgentfilesPlugin;
 
-	constructor(app: App, plugin: AgentSkillsPlugin) {
+	constructor(app: App, plugin: AgentfilesPlugin) {
 		super(app, plugin);
 		this.plugin = plugin;
 	}
@@ -15,7 +15,7 @@ export class AgentSkillsSettingTab extends PluginSettingTab {
 		const { containerEl } = this;
 		containerEl.empty();
 
-		containerEl.createEl("h2", { text: "Agent Skills" });
+		containerEl.createEl("h2", { text: "Agentfiles" });
 
 		new Setting(containerEl)
 			.setName("File watching")

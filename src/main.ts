@@ -1,12 +1,12 @@
-import { Plugin, type WorkspaceLeaf } from "obsidian";
-import { AgentSkillsView, VIEW_TYPE } from "./views/main-view";
+import { Plugin } from "obsidian";
+import { AgentfilesView, VIEW_TYPE } from "./views/main-view";
 import { SkillStore } from "./store";
 import { SkillWatcher } from "./watcher";
 import { getWatchPaths } from "./scanner";
-import { AgentSkillsSettingTab } from "./settings";
+import { AgentfilesSettingTab } from "./settings";
 import { DEFAULT_SETTINGS, type ChopsSettings } from "./types";
 
-export default class AgentSkillsPlugin extends Plugin {
+export default class AgentfilesPlugin extends Plugin {
 	settings: ChopsSettings = DEFAULT_SETTINGS;
 	store: SkillStore = new SkillStore();
 	private watcher: SkillWatcher | null = null;
@@ -15,7 +15,7 @@ export default class AgentSkillsPlugin extends Plugin {
 		await this.loadSettings();
 
 		this.registerView(VIEW_TYPE, (leaf) =>
-			new AgentSkillsView(
+			new AgentfilesView(
 				leaf,
 				this.store,
 				this.settings,
@@ -23,15 +23,15 @@ export default class AgentSkillsPlugin extends Plugin {
 			)
 		);
 
-		this.addRibbonIcon("cpu", "Agent Skills", () => this.activateView());
+		this.addRibbonIcon("cpu", "Agentfiles", () => this.activateView());
 
 		this.addCommand({
-			id: "open-agent-skills",
-			name: "Open Agent Skills",
+			id: "open-agentfiles",
+			name: "Open Agentfiles",
 			callback: () => this.activateView(),
 		});
 
-		this.addSettingTab(new AgentSkillsSettingTab(this.app, this));
+		this.addSettingTab(new AgentfilesSettingTab(this.app, this));
 
 		this.refreshStore();
 		this.startWatcher();
