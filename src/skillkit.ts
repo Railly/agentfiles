@@ -19,6 +19,14 @@ function buildPath(): string {
 			extra.push(join(nvmDir, d, "bin"));
 		}
 	} catch { /* empty */ }
+	const miseDir = join(HOME, ".local", "share", "mise", "installs");
+	for (const runtime of ["node", "bun"]) {
+		try {
+			for (const d of readdirSync(join(miseDir, runtime))) {
+				extra.push(join(miseDir, runtime, d, "bin"));
+			}
+		} catch { /* empty */ }
+	}
 	return [...extra, process.env.PATH || ""].join(":");
 }
 
@@ -35,6 +43,13 @@ function findSkillkitBin(): string | null {
 	try {
 		for (const d of readdirSync(nvmDir)) {
 			const p = join(nvmDir, d, "bin", "skillkit");
+			if (existsSync(p)) return p;
+		}
+	} catch { /* empty */ }
+	const miseNodeDir = join(HOME, ".local", "share", "mise", "installs", "node");
+	try {
+		for (const d of readdirSync(miseNodeDir)) {
+			const p = join(miseNodeDir, d, "bin", "skillkit");
 			if (existsSync(p)) return p;
 		}
 	} catch { /* empty */ }
