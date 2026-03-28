@@ -72,17 +72,20 @@ export class DashboardPanel {
 		}
 
 		const loading = this.containerEl.createDiv("as-dash-loading");
-		loading.setText("Loading analytics...");
+		const spinner = loading.createDiv("as-dash-spinner");
+		loading.createDiv({ cls: "as-dash-loading-text", text: "Loading analytics..." });
 
-		const data = loadData();
-		loading.remove();
+		setTimeout(() => {
+			const data = loadData();
+			loading.remove();
 
-		if (data.stats) this.renderOverview(data.stats, data.health);
-		if (data.stats) this.renderTopSkills(data.stats);
-		if (data.health) this.renderHealth(data.health);
-		if (data.burn) this.renderBurn(data.burn);
-		if (data.context) this.renderContext(data.context);
-		if (data.health) this.renderStale(data.health);
+			if (data.stats) this.renderOverview(data.stats, data.health);
+			if (data.stats) this.renderTopSkills(data.stats);
+			if (data.health) this.renderHealth(data.health);
+			if (data.burn) this.renderBurn(data.burn);
+			if (data.context) this.renderContext(data.context);
+			if (data.health) this.renderStale(data.health);
+		}, 10);
 	}
 
 	private renderNoSkillkit(): void {
