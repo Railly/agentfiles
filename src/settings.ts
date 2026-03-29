@@ -44,6 +44,41 @@ export class AgentfilesSettingTab extends PluginSettingTab {
 					})
 			);
 
+		new Setting(containerEl).setName("Project scanning").setHeading();
+
+		new Setting(containerEl)
+			.setName("Enable project scanning")
+			.setDesc(
+				"Scan all directories under the projects home folder for project-level skills"
+			)
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.projectScanEnabled)
+					.onChange(async (value) => {
+						this.plugin.settings.projectScanEnabled = value;
+						await this.plugin.saveSettings();
+						this.plugin.refreshStore();
+						this.plugin.restartWatcher();
+					})
+			);
+
+		new Setting(containerEl)
+			.setName("Projects home directory")
+			.setDesc(
+				"Root directory to scan for project-level skills. Leave empty for home directory (~)."
+			)
+			.addText((text) =>
+				text
+					.setPlaceholder("~")
+					.setValue(this.plugin.settings.projectsHomeDir)
+					.onChange(async (value) => {
+						this.plugin.settings.projectsHomeDir = value;
+						await this.plugin.saveSettings();
+						this.plugin.refreshStore();
+						this.plugin.restartWatcher();
+					})
+			);
+
 		new Setting(containerEl).setName("Tools").setHeading();
 
 		for (const tool of TOOL_CONFIGS) {

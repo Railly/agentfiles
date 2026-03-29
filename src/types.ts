@@ -47,7 +47,8 @@ export type SidebarFilter =
 	| { kind: "favorites" }
 	| { kind: "tool"; toolId: string }
 	| { kind: "type"; type: SkillType }
-	| { kind: "collection"; name: string };
+	| { kind: "collection"; name: string }
+	| { kind: "project"; project: string };
 
 export interface ChopsSettings {
 	tools: Record<string, { enabled: boolean; customPaths: string[] }>;
@@ -56,6 +57,8 @@ export interface ChopsSettings {
 	favorites: string[];
 	collections: Record<string, string[]>;
 	customScanPaths: string[];
+	projectScanEnabled: boolean;
+	projectsHomeDir: string;
 }
 
 export const DEFAULT_SETTINGS: ChopsSettings = {
@@ -65,4 +68,6 @@ export const DEFAULT_SETTINGS: ChopsSettings = {
 	favorites: [],
 	collections: {},
 	customScanPaths: [],
+	projectScanEnabled: true,
+	projectsHomeDir: "",
 };

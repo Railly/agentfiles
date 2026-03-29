@@ -1,12 +1,13 @@
 import { Events } from "obsidian";
 import type { SkillItem, SidebarFilter, ChopsSettings } from "./types";
-import { scanAll } from "./scanner";
+import { scanAll, getProjectName } from "./scanner";
 import { getSkillkitStats, isSkillkitAvailable } from "./skillkit";
 
 export class SkillStore extends Events {
 	private items: Map<string, SkillItem> = new Map();
 	private _filter: SidebarFilter = { kind: "all" };
 	private _searchQuery = "";
+	private _projectsHomeDir = "";
 
 	get filter(): SidebarFilter {
 		return this._filter;
@@ -40,6 +41,11 @@ export class SkillStore extends Events {
 					i.collections.includes(this._filter.name)
 				);
 				break;
+			case "project":
+				result = result.filter(
+					(i) => getProjectName(i.filePath, this._projectsHomeDir) === this._filter.project
+				);
+				break;
 		}
 
 		if (this._searchQuery) {
@@ -64,6 +70,7 @@ export class SkillStore extends Events {
 	}
 
 	refresh(settings: ChopsSettings): void {
+		this._projectsHomeDir = settings.projectsHomeDir;
 		this.items = scanAll(settings);
 		this.enrichWithSkillkit();
 		this.trigger("updated");
@@ -129,6 +136,15 @@ export class SkillStore extends Events {
 		const counts = new Map<string, number>();
 		for (const item of this.items.values()) {
 			counts.set(item.type, (counts.get(item.type) || 0) + 1);
+		}
+		return counts;
+	}
+
+	getProjectCounts(): Map<string, number> {
+		const counts = new Map<string, number>();
+		for (const item of this.items.values()) {
+			const project = getProjectName(item.filePath, this._projectsHomeDir);
+			counts.set(project, (counts.get(project) || 0) + 1);
 		}
 		return counts;
 	}
