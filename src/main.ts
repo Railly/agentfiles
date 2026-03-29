@@ -1,4 +1,4 @@
-import { Plugin } from "obsidian";
+import { Plugin, type FileSystemAdapter } from "obsidian";
 import { AgentfilesView, VIEW_TYPE } from "./views/main-view";
 import { SkillStore } from "./store";
 import { SkillWatcher } from "./watcher";
@@ -13,6 +13,7 @@ export default class AgentfilesPlugin extends Plugin {
 
 	async onload(): Promise<void> {
 		await this.loadSettings();
+		this.addVaultPath();
 
 		this.registerView(VIEW_TYPE, (leaf) =>
 			new AgentfilesView(
@@ -35,6 +36,15 @@ export default class AgentfilesPlugin extends Plugin {
 
 		this.refreshStore();
 		this.startWatcher();
+	}
+
+	private addVaultPath(): void {
+		const adapter = this.app.vault.adapter as FileSystemAdapter;
+		if (!adapter.getBasePath) return;
+		const vaultPath = adapter.getBasePath();
+		if (!this.settings.customScanPaths.includes(vaultPath)) {
+			this.settings.customScanPaths.push(vaultPath);
+		}
 	}
 
 	onunload(): void {

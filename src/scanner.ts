@@ -190,8 +190,55 @@ function scanPath(sp: SkillPath, toolId: string): SkillItem[] {
 	}
 }
 
+function scanProjectSkills(projectRoot: string, toolId: string): SkillItem[] {
+	const results: SkillItem[] = [];
+	const projectDirs = [
+		{ sub: ".claude/skills", type: "skill" as SkillType, pattern: "directory-with-skillmd" as ScanPattern },
+		{ sub: ".claude/commands", type: "command" as SkillType, pattern: "flat-md" as ScanPattern },
+		{ sub: ".claude/agents", type: "agent" as SkillType, pattern: "flat-md" as ScanPattern },
+		{ sub: ".cursor/skills", type: "skill" as SkillType, pattern: "directory-with-skillmd" as ScanPattern },
+		{ sub: ".codex/skills", type: "skill" as SkillType, pattern: "directory-with-skillmd" as ScanPattern },
+	];
+	for (const dir of projectDirs) {
+		const fullPath = join(projectRoot, dir.sub);
+		if (!existsSync(fullPath)) continue;
+		const sp: SkillPath = { baseDir: fullPath, type: dir.type, pattern: dir.pattern };
+		results.push(...scanPath(sp, toolId));
+	}
+	return results;
+}
+
 export function scanAll(settings: ChopsSettings): Map<string, SkillItem> {
 	const items = new Map<string, SkillItem>();
+	const nameMap = new Map<string, string>();
+
+	function addItem(item: SkillItem, toolId: string): void {
+		const existingById = items.get(item.id);
+		if (existingById) {
+			if (!existingById.tools.includes(toolId)) {
+				existingById.tools.push(toolId);
+			}
+			return;
+		}
+
+		const existingId = nameMap.get(item.name);
+		if (existingId) {
+			const existing = items.get(existingId);
+			if (existing && !existing.tools.includes(toolId)) {
+				existing.tools.push(toolId);
+			}
+			return;
+		}
+
+		item.isFavorite = settings.favorites.includes(item.id);
+		for (const [colName, colIds] of Object.entries(settings.collections)) {
+			if (colIds.includes(item.id)) {
+				item.collections.push(colName);
+			}
+		}
+		items.set(item.id, item);
+		nameMap.set(item.name, item.id);
+	}
 
 	for (const tool of TOOL_CONFIGS) {
 		if (!tool.isInstalled()) continue;
@@ -201,23 +248,15 @@ export function scanAll(settings: ChopsSettings): Map<string, SkillItem> {
 		const allPaths = [...tool.paths, ...tool.agentPaths];
 		for (const sp of allPaths) {
 			for (const item of scanPath(sp, tool.id)) {
-				const existing = items.get(item.id);
-				if (existing) {
-					if (!existing.tools.includes(tool.id)) {
-						existing.tools.push(tool.id);
-					}
-				} else {
-					item.isFavorite = settings.favorites.includes(item.id);
-					for (const [colName, colIds] of Object.entries(
-						settings.collections
-					)) {
-						if (colIds.includes(item.id)) {
-							item.collections.push(colName);
-						}
-					}
-					items.set(item.id, item);
-				}
+				addItem(item, tool.id);
 			}
+		}
+	}
+
+	for (const projectPath of settings.customScanPaths) {
+		if (!existsSync(projectPath)) continue;
+		for (const item of scanProjectSkills(projectPath, "claude-code")) {
+			addItem(item, "claude-code");
 		}
 	}
 
