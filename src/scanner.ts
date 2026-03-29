@@ -69,7 +69,7 @@ function scanDirectoryWithSkillMd(
 	const items: SkillItem[] = [];
 
 	for (const entry of readdirSync(baseDir, { withFileTypes: true })) {
-		if (!entry.isDirectory()) continue;
+		if (!entry.isDirectory() && !entry.isSymbolicLink()) continue;
 		const skillFile = join(baseDir, entry.name, "SKILL.md");
 		if (!existsSync(skillFile)) continue;
 
@@ -88,7 +88,7 @@ function scanFlatMd(
 	const items: SkillItem[] = [];
 
 	for (const entry of readdirSync(baseDir, { withFileTypes: true })) {
-		if (entry.isDirectory()) {
+		if (entry.isDirectory() || entry.isSymbolicLink()) {
 			const skillFile = join(baseDir, entry.name, "SKILL.md");
 			if (existsSync(skillFile)) {
 				const item = parseSkillFile(skillFile, type, toolId);
