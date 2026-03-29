@@ -242,7 +242,7 @@ function scanProjectRoots(settings: ChopsSettings): { items: SkillItem[]; toolId
 	try {
 		const SKIP_DIRS = new Set(["node_modules", ".Trash", "Library", "Applications", "Music", "Movies", "Pictures", "Public"]);
 		for (const entry of readdirSync(homeDir, { withFileTypes: true })) {
-			if (!entry.isDirectory()) continue;
+			if (!entry.isDirectory() && !entry.isSymbolicLink()) continue;
 			if (SKIP_DIRS.has(entry.name)) continue;
 			const projectPath = join(homeDir, entry.name);
 			for (const tool of TOOL_CONFIGS) {
@@ -352,7 +352,7 @@ export function getWatchPaths(settings?: ChopsSettings): string[] {
 		const SKIP_DIRS = new Set(["node_modules", ".Trash", "Library", "Applications", "Music", "Movies", "Pictures", "Public"]);
 		try {
 			for (const entry of readdirSync(homeDir, { withFileTypes: true })) {
-				if (!entry.isDirectory() || SKIP_DIRS.has(entry.name)) continue;
+				if ((!entry.isDirectory() && !entry.isSymbolicLink()) || SKIP_DIRS.has(entry.name)) continue;
 				const projectPath = join(homeDir, entry.name);
 				for (const dir of [".claude/skills", ".claude/commands", ".claude/agents", ".cursor/skills", ".codex/skills"]) {
 					const fullPath = join(projectPath, dir);
