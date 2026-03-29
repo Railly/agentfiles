@@ -5,7 +5,8 @@ import type { SkillItem, ChopsSettings } from "../types";
 import type { SkillStore } from "../store";
 import { TOOL_CONFIGS } from "../tool-configs";
 import { TOOL_SVGS, renderToolIcon } from "../tool-icons";
-import { formatLastUsed } from "../skillkit";
+import { formatLastUsed, getSkillTraces, runSkillkitAction, isSkillkitAvailable } from "../skillkit";
+import { renderSparkline } from "./sparkline";
 
 function estimateTokens(text: string): number {
 	return Math.ceil(text.length / 4);
@@ -193,6 +194,13 @@ export class DetailPanel {
 	private renderPreview(item: SkillItem): void {
 		const body = this.containerEl.createDiv("as-detail-body");
 		this.renderFrontmatter(body, item);
+		this.renderWarnings(body, item);
+		this.renderUsageSection(body, item);
+		this.renderConflicts(body, item);
+		this.renderTraces(body, item);
+		if (item.usage?.isStale && isSkillkitAvailable()) {
+			this.renderPruneAction(body, item);
+		}
 		const previewEl = body.createDiv("as-detail-preview markdown-rendered");
 		void MarkdownRenderer.render(
 			this.app,
@@ -201,6 +209,102 @@ export class DetailPanel {
 			item.filePath,
 			this
 		);
+	}
+
+	private renderWarnings(container: HTMLElement, item: SkillItem): void {
+		const warns: string[] = [];
+		if (item.warnings?.oversized) {
+			warns.push(`${item.warnings.lineCount} lines (recommended: <500)`);
+		}
+		if (item.warnings?.longDesc) {
+			warns.push(`Description is ${item.warnings.descChars} chars (recommended: <1024)`);
+		}
+		if (item.conflicts && item.conflicts.length > 0) {
+			const names = item.conflicts.map((c) => c.skillName).join(", ");
+			warns.push(`Conflicts with: ${names}`);
+		}
+		if (warns.length === 0) return;
+
+		const section = container.createDiv("as-warnings");
+		const iconEl = section.createDiv("as-warnings-icon");
+		setIcon(iconEl, "alert-triangle");
+		const list = section.createDiv("as-warnings-list");
+		for (const w of warns) {
+			list.createDiv({ cls: "as-warnings-item", text: w });
+		}
+	}
+
+	private renderUsageSection(container: HTMLElement, item: SkillItem): void {
+		if (!item.usage || item.usage.uses === 0) return;
+
+		const section = container.createDiv("as-usage-section");
+		const left = section.createDiv("as-usage-left");
+		left.createSpan({ cls: "as-usage-count", text: String(item.usage.uses) });
+		left.createSpan({ cls: "as-usage-label", text: "uses" });
+		left.createSpan({ cls: "as-usage-last", text: formatLastUsed(item.usage.lastUsed) });
+
+		if (item.usage.daily && item.usage.daily.length > 1) {
+			const sparkContainer = section.createDiv("as-usage-spark");
+			renderSparkline(sparkContainer, item.usage.daily.map((d) => d.count), 80, 20);
+		}
+	}
+
+	private renderConflicts(container: HTMLElement, item: SkillItem): void {
+		if (!item.conflicts || item.conflicts.length === 0) return;
+
+		const section = container.createDiv("as-conflicts-section");
+		section.createDiv({ cls: "as-section-title", text: `Conflicts (${item.conflicts.length})` });
+
+		for (const conflict of item.conflicts) {
+			const row = section.createDiv("as-conflict-row");
+			row.createSpan({ cls: "as-conflict-name", text: conflict.skillName });
+			const barWrap = row.createDiv("as-conflict-bar-wrap");
+			const bar = barWrap.createDiv("as-conflict-bar");
+			bar.setCssProps({ "--bar-w": `${(conflict.similarity * 100).toFixed(0)}%` });
+			row.createSpan({ cls: "as-conflict-score", text: `${(conflict.similarity * 100).toFixed(0)}%` });
+		}
+	}
+
+	private renderTraces(container: HTMLElement, item: SkillItem): void {
+		if (!isSkillkitAvailable()) return;
+
+		const traces = getSkillTraces(item.name);
+		if (traces.length === 0) return;
+
+		const section = container.createDiv("as-traces-section");
+		section.createDiv({ cls: "as-section-title", text: `Recent traces (${traces.length})` });
+
+		const table = section.createDiv("as-traces-table");
+		for (const trace of traces) {
+			const row = table.createDiv("as-trace-row");
+			const date = new Date(trace.timestamp);
+			row.createSpan({ cls: "as-trace-date", text: date.toLocaleDateString(undefined, { month: "short", day: "numeric" }) });
+			row.createSpan({ cls: "as-trace-model", text: trace.model.replace("claude-", "").replace("-4-6", "") });
+			row.createSpan({ cls: "as-trace-tokens", text: `${(trace.tokens / 1000).toFixed(1)}k` });
+			row.createSpan({ cls: "as-trace-cost", text: trace.cost > 0 ? `$${trace.cost.toFixed(2)}` : "" });
+			row.createSpan({ cls: "as-trace-duration", text: `${(trace.duration / 1000).toFixed(1)}s` });
+		}
+
+		section.createDiv({ cls: "as-traces-hint", text: "skillkit trace --list --skill " + item.name });
+	}
+
+	private renderPruneAction(container: HTMLElement, item: SkillItem): void {
+		const section = container.createDiv("as-prune-section");
+		const btn = section.createEl("button", { cls: "as-prune-btn", text: "Remove this skill" });
+		section.createSpan({ cls: "as-prune-hint", text: "This skill hasn't been used in 30+ days" });
+
+		btn.addEventListener("click", () => {
+			const confirmed = confirm(`Remove "${item.name}"? This will delete the skill files.`);
+			if (!confirmed) return;
+
+			const result = runSkillkitAction(`prune --skill ${item.name} --yes`);
+			if (result.success) {
+				new Notice(`Removed ${item.name}`);
+				this.store.refresh(this.settings);
+			} else {
+				new Notice(`Failed to remove: ${result.output}`);
+			}
+		});
 	}
 
 	private renderEditor(item: SkillItem): void {

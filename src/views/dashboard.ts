@@ -1,6 +1,6 @@
-import { setIcon } from "obsidian";
+import { Notice, setIcon } from "obsidian";
 import { shell } from "electron";
-import { isSkillkitAvailable, runSkillkitJson } from "../skillkit";
+import { isSkillkitAvailable, runSkillkitJson, runSkillkitAction } from "../skillkit";
 
 interface StatsJson {
 	period: { days: number };
@@ -113,7 +113,24 @@ export class DashboardPanel {
 
 	private renderOverview(stats: StatsJson, health: HealthJson | null): void {
 		const section = this.containerEl.createDiv("as-dash-section");
-		section.createDiv({ cls: "as-dash-title", text: "Overview" });
+		const titleRow = section.createDiv("as-dash-title-row");
+		titleRow.createDiv({ cls: "as-dash-title", text: "Overview" });
+		const scanBtn = titleRow.createEl("button", { cls: "as-action-btn", text: "Scan sessions" });
+		scanBtn.addEventListener("click", () => {
+			scanBtn.setText("Scanning...");
+			scanBtn.disabled = true;
+			setTimeout(() => {
+				const result = runSkillkitAction("scan");
+				if (result.success) {
+					new Notice("Scan complete");
+					this.render();
+				} else {
+					new Notice(`Scan failed: ${result.output}`);
+				}
+				scanBtn.setText("Scan sessions");
+				scanBtn.disabled = false;
+			}, 10);
+		});
 
 		const grid = section.createDiv("as-dash-stats");
 		this.statCard(grid, String(stats.total_invocations), "invocations", "activity");

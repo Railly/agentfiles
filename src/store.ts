@@ -1,7 +1,7 @@
 import { Events } from "obsidian";
 import type { SkillItem, SidebarFilter, ChopsSettings } from "./types";
 import { scanAll, getProjectName } from "./scanner";
-import { getSkillkitStats, isSkillkitAvailable } from "./skillkit";
+import { getSkillkitStatsWithDaily, getSkillConflicts, getSkillWarnings, isSkillkitAvailable } from "./skillkit";
 
 export class SkillStore extends Events {
 	private items: Map<string, SkillItem> = new Map();
@@ -78,7 +78,14 @@ export class SkillStore extends Events {
 
 	private enrichWithSkillkit(): void {
 		if (!isSkillkitAvailable()) return;
-		const stats = getSkillkitStats();
+		const stats = getSkillkitStatsWithDaily();
+		const conflicts = getSkillConflicts();
+		const warnings = getSkillWarnings();
+
+		const oversizedSet = new Set(warnings.oversized.map((w) => w.name));
+		const longDescSet = new Set(warnings.longDesc.map((w) => w.name));
+		const oversizedMap = new Map(warnings.oversized.map((w) => [w.name, w.lines]));
+		const longDescMap = new Map(warnings.longDesc.map((w) => [w.name, w.chars]));
 
 		for (const item of this.items.values()) {
 			const dirName = item.filePath.split("/").slice(-2, -1)[0];
@@ -97,6 +104,17 @@ export class SkillStore extends Events {
 					isHeavy: item.content.length > 5000,
 				};
 			}
+
+			const lineCount = item.content.split("\n").length;
+			const descLen = item.description.length;
+			item.warnings = {
+				oversized: oversizedSet.has(item.name) || lineCount > 500,
+				longDesc: longDescSet.has(item.name) || descLen > 1024,
+				lineCount: oversizedMap.get(item.name) ?? lineCount,
+				descChars: longDescMap.get(item.name) ?? descLen,
+			};
+
+			item.conflicts = conflicts.get(item.name) || conflicts.get(dirName) || [];
 		}
 	}
 

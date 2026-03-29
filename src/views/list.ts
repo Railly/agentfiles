@@ -125,6 +125,12 @@ export class ListPanel {
 				meta.createSpan({ cls: "as-badge-heavy", text: "heavy" });
 			}
 		}
+		if (item.warnings?.oversized) {
+			meta.createSpan({ cls: "as-badge-warn", text: "oversized" });
+		}
+		if (item.conflicts && item.conflicts.length > 0) {
+			meta.createSpan({ cls: "as-badge-conflict", text: "conflict" });
+		}
 
 		card.addEventListener("click", () => {
 			this.selectedId = item.id;

@@ -39,7 +39,23 @@ export interface SkillItem {
 		daysSinceUsed: number | null;
 		isStale: boolean;
 		isHeavy: boolean;
+		daily?: { date: string; count: number }[];
 	};
+	warnings?: {
+		oversized: boolean;
+		longDesc: boolean;
+		lineCount: number;
+		descChars: number;
+	};
+	conflicts?: { skillName: string; similarity: number }[];
+	traces?: {
+		traceId: string;
+		timestamp: string;
+		tokens: number;
+		cost: number;
+		duration: number;
+		model: string;
+	}[];
 }
 
 export type SidebarFilter =
