@@ -60,7 +60,7 @@ export default class AgentfilesPlugin extends Plugin {
 		this.watcher = new SkillWatcher(this.settings.watchDebounceMs, () =>
 			this.refreshStore()
 		);
-		this.watcher.watchPaths(getWatchPaths());
+		this.watcher.watchPaths(getWatchPaths(this.settings));
 	}
 
 	stopWatcher(): void {

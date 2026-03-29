@@ -28,6 +28,7 @@ export class SidebarPanel {
 		this.renderLibrarySection();
 		this.renderTypeSection();
 		this.renderToolSection();
+		this.renderProjectSection();
 		this.renderCollectionSection();
 
 		if (!this.store.hasSkillkit) {
@@ -121,6 +122,23 @@ export class SidebarPanel {
 				this.store.setFilter(filter);
 			});
 		}
+	}
+
+	private renderProjectSection(): void {
+		const projectCounts = this.store.getProjectCounts();
+		if (projectCounts.size === 0) return;
+
+		const items: { label: string; icon: string; filter: SidebarFilter; count: number }[] = [];
+		for (const [project, count] of projectCounts) {
+			items.push({
+				label: project,
+				icon: "folder-git-2",
+				filter: { kind: "project", project },
+				count,
+			});
+		}
+		items.sort((a, b) => a.label.localeCompare(b.label));
+		this.renderSection("Projects", items);
 	}
 
 	private renderCollectionSection(): void {
@@ -226,6 +244,8 @@ export class SidebarPanel {
 			return current.type === filter.type;
 		if (current.kind === "collection" && filter.kind === "collection")
 			return current.name === filter.name;
+		if (current.kind === "project" && filter.kind === "project")
+			return current.project === filter.project;
 		return true;
 	}
 }

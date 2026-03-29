@@ -163,9 +163,15 @@ export class DetailPanel {
 
 	private renderFrontmatter(container: HTMLElement, item: SkillItem): void {
 		const keys = Object.keys(item.frontmatter);
-		if (keys.length === 0) return;
-
 		const section = container.createDiv("as-frontmatter");
+
+		if (item.filePath) {
+			const pathProp = section.createDiv("as-fm-prop");
+			pathProp.createSpan({ cls: "as-fm-key", text: "path" });
+			pathProp.createSpan({ cls: "as-fm-value", text: item.filePath });
+		}
+
+		if (keys.length === 0 && !item.filePath) return;
 
 		for (const key of keys) {
 			const value = item.frontmatter[key];

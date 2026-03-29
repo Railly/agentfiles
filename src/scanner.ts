@@ -5,11 +5,12 @@ import {
 	realpathSync,
 	statSync,
 } from "fs";
-import { join, basename, extname } from "path";
+import { join, basename, extname, relative } from "path";
+import { homedir } from "os";
 import { parseYaml } from "obsidian";
 import { createHash } from "crypto";
 import { TOOL_CONFIGS } from "./tool-configs";
-import type { SkillItem, SkillPath, SkillType, ChopsSettings } from "./types";
+import type { SkillItem, SkillPath, SkillType, ChopsSettings, ToolConfig } from "./types";
 
 const IGNORED_FILES = new Set([
 	"readme.md",
@@ -211,6 +212,64 @@ function scanProjectSkills(projectRoot: string, toolId: string): SkillItem[] {
 	return results;
 }
 
+function getProjectsHomeDir(settings: ChopsSettings): string {
+	return settings.projectsHomeDir || homedir();
+}
+
+function scanToolProjectPaths(
+	projectRoot: string,
+	tool: ToolConfig
+): SkillItem[] {
+	const home = homedir();
+	const results: SkillItem[] = [];
+	for (const sp of [...tool.paths, ...tool.agentPaths]) {
+		const rel = relative(home, sp.baseDir);
+		if (rel.startsWith("..") || rel.startsWith("/")) continue;
+		const projectPath = join(projectRoot, rel);
+		if (!existsSync(projectPath)) continue;
+		try {
+			results.push(...scanPath({ ...sp, baseDir: projectPath }, tool.id));
+		} catch { /* permission errors, broken symlinks, etc */ }
+	}
+	return results;
+}
+
+function scanProjectRoots(settings: ChopsSettings): { items: SkillItem[]; toolId: string }[] {
+	const homeDir = getProjectsHomeDir(settings);
+	if (!existsSync(homeDir)) return [];
+
+	const results: { items: SkillItem[]; toolId: string }[] = [];
+	try {
+		const SKIP_DIRS = new Set(["node_modules", ".Trash", "Library", "Applications", "Music", "Movies", "Pictures", "Public"]);
+		for (const entry of readdirSync(homeDir, { withFileTypes: true })) {
+			if (!entry.isDirectory() && !entry.isSymbolicLink()) continue;
+			if (SKIP_DIRS.has(entry.name)) continue;
+			const projectPath = join(homeDir, entry.name);
+			for (const tool of TOOL_CONFIGS) {
+				if (!tool.isInstalled()) continue;
+				const toolSettings = settings.tools[tool.id];
+				if (toolSettings && !toolSettings.enabled) continue;
+				const items = scanToolProjectPaths(projectPath, tool);
+				if (items.length > 0) {
+					results.push({ items, toolId: tool.id });
+				}
+			}
+		}
+	} catch { /* permission errors, etc */ }
+	return results;
+}
+
+export function getProjectName(filePath: string, projectsHomeDir: string): string {
+	const homeDir = projectsHomeDir || homedir();
+	if (!filePath.startsWith(homeDir + "/")) return "global";
+	const rest = filePath.slice(homeDir.length + 1);
+	const parts = rest.split("/");
+	if (parts.length > 1 && !parts[0].startsWith(".")) {
+		return parts[0];
+	}
+	return "global";
+}
+
 export function scanAll(settings: ChopsSettings): Map<string, SkillItem> {
 	const items = new Map<string, SkillItem>();
 	const nameMap = new Map<string, string>();
@@ -263,6 +322,14 @@ export function scanAll(settings: ChopsSettings): Map<string, SkillItem> {
 		}
 	}
 
+	if (settings.projectScanEnabled) {
+		for (const { items: projectItems, toolId } of scanProjectRoots(settings)) {
+			for (const item of projectItems) {
+				addItem(item, toolId);
+			}
+		}
+	}
+
 	return items;
 }
 
@@ -270,7 +337,7 @@ export function getInstalledTools(): string[] {
 	return TOOL_CONFIGS.filter((t) => t.isInstalled()).map((t) => t.id);
 }
 
-export function getWatchPaths(): string[] {
+export function getWatchPaths(settings?: ChopsSettings): string[] {
 	const paths: string[] = [];
 	for (const tool of TOOL_CONFIGS) {
 		if (!tool.isInstalled()) continue;
@@ -279,6 +346,20 @@ export function getWatchPaths(): string[] {
 				paths.push(sp.baseDir);
 			}
 		}
+	}
+	if (settings?.projectScanEnabled) {
+		const homeDir = getProjectsHomeDir(settings);
+		const SKIP_DIRS = new Set(["node_modules", ".Trash", "Library", "Applications", "Music", "Movies", "Pictures", "Public"]);
+		try {
+			for (const entry of readdirSync(homeDir, { withFileTypes: true })) {
+				if ((!entry.isDirectory() && !entry.isSymbolicLink()) || SKIP_DIRS.has(entry.name)) continue;
+				const projectPath = join(homeDir, entry.name);
+				for (const dir of [".claude/skills", ".claude/commands", ".claude/agents", ".cursor/skills", ".codex/skills"]) {
+					const fullPath = join(projectPath, dir);
+					if (existsSync(fullPath)) paths.push(fullPath);
+				}
+			}
+		} catch { /* permission errors */ }
 	}
 	return paths;
 }
