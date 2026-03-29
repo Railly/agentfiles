@@ -46,15 +46,17 @@ function parseFrontmatter(raw: string): {
 function extractName(
 	frontmatter: Record<string, unknown>,
 	content: string,
-	filePath: string
+	filePath: string,
+	pattern: ScanPattern
 ): string {
 	if (typeof frontmatter.name === "string" && frontmatter.name) {
 		return frontmatter.name;
 	}
-	const h1 = content.match(/^#\s+(.+)$/m);
-	if (h1) return h1[1].trim();
 	const name = basename(filePath, extname(filePath));
 	if (name === "SKILL") return basename(join(filePath, ".."));
+	if (pattern === "flat-md" || pattern === "mdc") return name;
+	const h1 = content.match(/^#\s+(.+)$/m);
+	if (h1) return h1[1].trim();
 	return name;
 }
 
@@ -111,9 +113,9 @@ function scanFlatMd(
 			continue;
 		}
 
-		const name = entry.name.toLowerCase();
-		if (!name.endsWith(".md") || IGNORED_FILES.has(name)) continue;
-		const item = parseSkillFile(join(baseDir, entry.name), type, toolId);
+		const fname = entry.name.toLowerCase();
+		if (!fname.endsWith(".md") || IGNORED_FILES.has(fname)) continue;
+		const item = parseSkillFile(join(baseDir, entry.name), type, toolId, "flat-md");
 		if (item) items.push(item);
 	}
 	return items;
@@ -130,7 +132,7 @@ function scanMdc(
 	for (const entry of readdirSync(baseDir, { withFileTypes: true })) {
 		if (!entry.name.endsWith(".mdc") && !entry.name.endsWith(".md")) continue;
 		if (entry.isDirectory()) continue;
-		const item = parseSkillFile(join(baseDir, entry.name), type, toolId);
+		const item = parseSkillFile(join(baseDir, entry.name), type, toolId, "mdc");
 		if (item) items.push(item);
 	}
 	return items;
@@ -139,13 +141,14 @@ function scanMdc(
 function parseSkillFile(
 	filePath: string,
 	type: SkillType,
-	toolId: string
+	toolId: string,
+	pattern: ScanPattern = "directory-with-skillmd"
 ): SkillItem | null {
 	try {
 		const raw = readFileSync(filePath, "utf-8");
 		const stat = statSync(filePath);
 		const { frontmatter, content } = parseFrontmatter(raw);
-		const name = extractName(frontmatter, content, filePath);
+		const name = extractName(frontmatter, content, filePath, pattern);
 		const description =
 			typeof frontmatter.description === "string"
 				? frontmatter.description
