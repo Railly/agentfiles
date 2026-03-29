@@ -35,6 +35,8 @@ function findSkillkitBin(): string | null {
 		"/usr/local/bin/skillkit",
 		"/opt/homebrew/bin/skillkit",
 		join(HOME, ".local", "bin", "skillkit"),
+		join(HOME, ".bun", "bin", "skillkit"),
+		join(HOME, ".local", "share", "mise", "shims", "skillkit"),
 	];
 	for (const p of searchPaths) {
 		if (existsSync(p)) return p;
@@ -46,13 +48,15 @@ function findSkillkitBin(): string | null {
 			if (existsSync(p)) return p;
 		}
 	} catch { /* empty */ }
-	const miseNodeDir = join(HOME, ".local", "share", "mise", "installs", "node");
-	try {
-		for (const d of readdirSync(miseNodeDir)) {
-			const p = join(miseNodeDir, d, "bin", "skillkit");
-			if (existsSync(p)) return p;
-		}
-	} catch { /* empty */ }
+	const miseDir = join(HOME, ".local", "share", "mise", "installs");
+	for (const runtime of ["node", "bun"]) {
+		try {
+			for (const d of readdirSync(join(miseDir, runtime))) {
+				const p = join(miseDir, runtime, d, "bin", "skillkit");
+				if (existsSync(p)) return p;
+			}
+		} catch { /* empty */ }
+	}
 	return null;
 }
 
