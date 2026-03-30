@@ -195,8 +195,8 @@ export class DashboardPanel {
 		section.createDiv({ cls: "as-dash-title", text: `Burn Rate — ${burn.agent} (${burn.period.days}d)` });
 
 		const stats = section.createDiv("as-dash-stats as-dash-stats-sm");
-		this.statCard(stats, `$${burn.cost.total.toFixed(0)}`, "total cost", "flame");
-		this.statCard(stats, `$${(burn.cost.total / (burn.period.days || 1)).toFixed(0)}`, "daily avg", "trending-up");
+		this.statCard(stats, `$${Math.round(burn.cost.total).toLocaleString()}`, "total cost", "flame");
+		this.statCard(stats, `$${Math.round(burn.cost.total / (burn.period.days || 1)).toLocaleString()}`, "daily avg", "trending-up");
 		this.statCard(stats, `${(burn.period.sessions || 0).toLocaleString()}`, "sessions", "terminal");
 		this.statCard(stats, `${((burn.period.api_calls || 0) / 1000).toFixed(0)}k`, "API calls", "zap");
 
@@ -207,7 +207,7 @@ export class DashboardPanel {
 				row.createSpan({ cls: "as-model-name", text: m.model });
 				row.createSpan({ cls: "as-model-calls", text: `${m.apiCalls.toLocaleString()} calls` });
 				if (m.costUsd > 0) {
-					row.createSpan({ cls: "as-model-cost", text: `$${m.costUsd.toFixed(0)}` });
+					row.createSpan({ cls: "as-model-cost", text: `$${Math.round(m.costUsd).toLocaleString()}` });
 				}
 			}
 		}
