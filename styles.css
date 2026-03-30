@@ -1547,3 +1547,30 @@
 	font-family: var(--font-monospace);
 	margin: 0 0 12px;
 }
+
+.as-mp-install-row {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-top: 8px;
+}
+
+.as-mp-uninstall-btn {
+	padding: 4px 12px;
+	border-radius: var(--radius-s);
+	background: none;
+	border: 1px solid var(--background-modifier-border);
+	color: var(--text-muted);
+	cursor: pointer;
+	font-size: var(--font-ui-smaller);
+}
+
+.as-mp-uninstall-btn:hover {
+	color: var(--text-error);
+	border-color: var(--text-error);
+}
+
+.as-mp-uninstall-btn:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}

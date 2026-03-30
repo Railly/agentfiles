@@ -1,7 +1,8 @@
 import { MarkdownRenderer, Notice, setIcon, type App } from "obsidian";
-import { searchSkills, fetchSkillContent, formatInstalls, getPopularSkills, type MarketplaceSkill } from "../marketplace";
+import { searchSkills, fetchSkillContent, formatInstalls, getPopularSkills, removeSkill, type MarketplaceSkill } from "../marketplace";
 import type { ChopsSettings } from "../types";
 import { InstallSkillModal } from "./install-modal";
+import { showConfirmModal } from "./confirm-modal";
 
 export class MarketplacePanel {
 	private containerEl: HTMLElement;
@@ -140,7 +141,28 @@ export class MarketplacePanel {
 		if (!skill.installed) {
 			this.renderInstallButton(header, skill);
 		} else {
-			header.createDiv({ cls: "as-mp-installed-label", text: "Already installed" });
+			const row = header.createDiv("as-mp-install-row");
+			row.createSpan({ cls: "as-mp-installed-label", text: "Installed" });
+			const uninstallBtn = row.createEl("button", { cls: "as-mp-uninstall-btn", text: "Uninstall" });
+			uninstallBtn.addEventListener("click", () => {
+				showConfirmModal(this.app, "Uninstall skill", `Remove "${skill.name}" from all agents?`, () => {
+					uninstallBtn.setText("Removing...");
+					uninstallBtn.disabled = true;
+					setTimeout(() => {
+						const result = removeSkill(skill.name, this.settings.packageRunner);
+						if (result.success) {
+							new Notice(`Removed ${skill.name}`);
+							skill.installed = false;
+							this.onRefresh();
+							void this.showPreview(skill);
+						} else {
+							new Notice(`Failed: ${result.output.slice(0, 200)}`);
+							uninstallBtn.setText("Uninstall");
+							uninstallBtn.disabled = false;
+						}
+					}, 10);
+				});
+			});
 		}
 
 		const contentEl = this.previewEl.createDiv("as-mp-preview-content");

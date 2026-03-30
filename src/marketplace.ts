@@ -228,6 +228,28 @@ function getInstalledNames(): Set<string> {
 	return names;
 }
 
+export function removeSkill(skillName: string, runner: "auto" | "npx" | "bunx" = "auto"): { success: boolean; output: string } {
+	const resolvedRunner = getRunner(runner);
+	const cmd = `${resolvedRunner} skills remove ${skillName} --all`;
+	try {
+		const out = execSync(cmd, {
+			encoding: "utf-8",
+			timeout: 30000,
+			env: { ...process.env, PATH: buildPath(), NO_COLOR: "1" },
+			stdio: ["pipe", "pipe", "ignore"],
+		}).trim();
+		return { success: true, output: out };
+	} catch (e: unknown) {
+		if (e && typeof e === "object" && "stdout" in e) {
+			const stdout = String((e as { stdout: unknown }).stdout || "");
+			if (stdout.includes("Removed") || stdout.includes("Done")) {
+				return { success: true, output: stdout };
+			}
+		}
+		return { success: false, output: e instanceof Error ? e.message : "Remove failed" };
+	}
+}
+
 export function formatInstalls(n: number): string {
 	if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
 	if (n >= 1000) return `${(n / 1000).toFixed(1)}K`;
