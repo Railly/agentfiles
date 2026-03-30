@@ -52,9 +52,7 @@ export class SkillStore extends Events {
 			const q = this._searchQuery.toLowerCase();
 			result = result.filter(
 				(i) =>
-					i.name.toLowerCase().includes(q) ||
-					i.description.toLowerCase().includes(q) ||
-					i.content.toLowerCase().includes(q)
+					i.name.toLowerCase().includes(q)
 			);
 		}
 
