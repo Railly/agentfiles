@@ -355,20 +355,19 @@ function findProjectDirs(dir: string, remainingDepth: number, results: string[])
 	}
 
 	// Check children first — a parent may have markers but still contain projects
-	let foundChildren = false;
+	const countBefore = results.length;
 	try {
 		for (const entry of readdirSync(dir, { withFileTypes: true })) {
 			if (!entry.isDirectory() || entry.name.startsWith(".")) continue;
 			const child = join(dir, entry.name);
 			if (isProjectDir(child)) {
 				results.push(child);
-				foundChildren = true;
 			} else if (remainingDepth > 1) {
 				findProjectDirs(child, remainingDepth - 1, results);
-				if (results.length > 0) foundChildren = true;
 			}
 		}
 	} catch { /* empty */ }
+	const foundChildren = results.length > countBefore;
 
 	if (!foundChildren && isProjectDir(dir)) {
 		results.push(dir);

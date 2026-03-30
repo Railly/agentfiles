@@ -64,21 +64,21 @@ export class AgentfilesSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl).setName("Projects").setHeading();
 
+		let pathInput: HTMLInputElement | null = null;
 		new Setting(containerEl)
 			.setName("Project directories")
 			.setDesc(
 				"Add project directories to scan for project-level skills, commands, rules, and agents. " +
 				"Depth controls how many levels deep to search for projects."
 			)
+			.addText((text) => {
+				text.setPlaceholder("/path/to/project");
+				pathInput = text.inputEl;
+			})
 			.addButton((btn) =>
 				btn.setButtonText("Add project").onClick(async () => {
-					const { remote } = require("electron");
-					const result = await remote.dialog.showOpenDialog({
-						properties: ["openDirectory"],
-						title: "Select a project directory",
-					});
-					if (result.canceled || result.filePaths.length === 0) return;
-					const dir = result.filePaths[0];
+					const dir = pathInput?.value?.trim();
+					if (!dir) return;
 					const exists = this.plugin.settings.projectPaths.some(
 						(e) => e.path === dir
 					);
