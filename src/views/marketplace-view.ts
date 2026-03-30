@@ -130,20 +130,23 @@ export class MarketplacePanel {
 		this.previewEl.empty();
 
 		const header = this.previewEl.createDiv("as-mp-preview-header");
-		header.createDiv({ cls: "as-mp-preview-name", text: skill.name });
-		header.createDiv({ cls: "as-mp-preview-source", text: skill.source });
 
-		const stats = header.createDiv("as-mp-preview-stats");
-		const dlIcon = stats.createSpan("as-mp-dl-icon");
+		const topRow = header.createDiv("as-mp-preview-top");
+		const left = topRow.createDiv("as-mp-preview-left");
+		left.createDiv({ cls: "as-mp-preview-name", text: skill.name });
+		const meta = left.createDiv("as-mp-preview-meta");
+		meta.createSpan({ cls: "as-mp-preview-source", text: skill.source });
+		const dlIcon = meta.createSpan("as-mp-dl-icon");
 		setIcon(dlIcon, "download");
-		stats.createSpan({ text: `${formatInstalls(skill.installs)} installs` });
+		meta.createSpan({ cls: "as-mp-preview-installs", text: formatInstalls(skill.installs) });
+
+		const right = topRow.createDiv("as-mp-preview-right");
 
 		if (!skill.installed) {
-			this.renderInstallButton(header, skill);
+			this.renderInstallButton(right, skill);
 		} else {
-			const row = header.createDiv("as-mp-install-row");
-			row.createSpan({ cls: "as-mp-installed-label", text: "Installed" });
-			const uninstallBtn = row.createEl("button", { cls: "as-mp-uninstall-btn", text: "Uninstall" });
+			right.createSpan({ cls: "as-mp-installed-label", text: "Installed" });
+			const uninstallBtn = right.createEl("button", { cls: "as-mp-uninstall-btn", text: "Uninstall" });
 			uninstallBtn.addEventListener("click", () => {
 				showConfirmModal(this.app, "Uninstall skill", `Remove "${skill.name}" from all agents?`, () => {
 					uninstallBtn.setText("Removing...");

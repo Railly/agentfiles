@@ -1457,24 +1457,45 @@
 	border-bottom: 1px solid var(--background-modifier-border);
 }
 
+.as-mp-preview-top {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 12px;
+}
+
+.as-mp-preview-left {
+	min-width: 0;
+	flex: 1;
+}
+
+.as-mp-preview-right {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex-shrink: 0;
+}
+
 .as-mp-preview-name {
 	font-size: var(--font-ui-medium);
 	font-weight: 600;
 	color: var(--text-normal);
 }
 
+.as-mp-preview-meta {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	margin-top: 4px;
+}
+
 .as-mp-preview-source {
 	font-size: var(--font-ui-smaller);
 	color: var(--text-faint);
 	font-family: var(--font-monospace);
-	margin-top: 2px;
 }
 
-.as-mp-preview-stats {
-	display: flex;
-	align-items: center;
-	gap: 4px;
-	margin-top: 6px;
+.as-mp-preview-installs {
 	font-size: var(--font-ui-smaller);
 	color: var(--text-muted);
 }
@@ -1483,11 +1504,12 @@
 	font-size: var(--font-ui-smaller);
 	color: var(--color-green);
 	font-weight: 500;
-	margin-top: 8px;
 }
 
 .as-mp-install-row {
-	margin-top: 8px;
+	display: flex;
+	align-items: center;
+	gap: 8px;
 }
 
 .as-mp-install-btn {
