@@ -77,9 +77,11 @@ export class InstallSkillModal extends Modal {
 				: TOOL_SVGS[agent.id + "-code"] ? agent.id + "-code"
 				: TOOL_SVGS[agent.id + "-cli"] ? agent.id + "-cli"
 				: null;
+			const iconSpan = nameEl.createSpan("as-install-agent-icon");
 			if (iconKey) {
-				const iconSpan = nameEl.createSpan("as-install-agent-icon");
 				renderToolIcon(iconSpan, iconKey, 14);
+			} else {
+				iconSpan.addClass("as-install-agent-placeholder");
 			}
 			nameEl.createSpan({ text: agent.label });
 			if (isInstalled) {

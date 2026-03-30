@@ -1743,3 +1743,17 @@
 	margin-left: 6px;
 	font-weight: 400;
 }
+
+.as-install-agent-placeholder {
+	width: 14px;
+	height: 14px;
+	border-radius: 50%;
+	background: repeating-linear-gradient(
+		-45deg,
+		var(--background-modifier-border),
+		var(--background-modifier-border) 2px,
+		transparent 2px,
+		transparent 4px
+	);
+	opacity: 0.5;
+}
