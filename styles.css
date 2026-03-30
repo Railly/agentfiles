@@ -1564,8 +1564,8 @@
 	margin: 0 0 4px;
 }
 
-.as-install-modal .setting-item-heading .setting-item-name {
-	padding-left: 0;
+.as-install-modal .setting-item-heading > .setting-item-name {
+	padding-left: 0 !important;
 }
 
 .as-install-source {
@@ -1757,16 +1757,19 @@
 	);
 }
 
-.as-install-modal .setting-item-heading .setting-item-name {
-	padding-left: 0;
+.as-install-modal .setting-item-heading > .setting-item-name {
+	padding-left: 0 !important;
 }
 
 .as-install-scroll {
 	max-height: 300px;
 	overflow-y: auto;
-	border: 1px solid var(--background-modifier-border);
-	border-radius: var(--radius-s);
 	margin-bottom: 12px;
+}
+
+.as-install-scroll .setting-item {
+	padding: 8px 0;
+	border: none;
 }
 
 .as-install-footer {

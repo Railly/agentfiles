@@ -1,4 +1,4 @@
-import { execSync } from "child_process";
+import { execSync, exec } from "child_process";
 import { existsSync, readFileSync, readdirSync, rmSync, writeFileSync } from "fs";
 import { join } from "path";
 import { homedir } from "os";
@@ -324,6 +324,51 @@ export function refreshInstalledStatus(skills: MarketplaceSkill[]): MarketplaceS
 		s.installed = installed.has(s.name);
 	}
 	return skills;
+}
+
+function execAsync(cmd: string, timeout = 120000): Promise<{ success: boolean; output: string }> {
+	return new Promise((resolve) => {
+		exec(cmd, {
+			encoding: "utf-8",
+			timeout,
+			env: { ...process.env, PATH: buildPath(), NO_COLOR: "1" },
+		}, (error, stdout) => {
+			const out = String(stdout ?? "");
+			if (!error || out.includes("Done") || out.includes("Installed") || out.includes("Removed") || out.includes("Updated")) {
+				resolve({ success: true, output: out });
+			} else {
+				resolve({ success: false, output: error?.message ?? "Command failed" });
+			}
+		});
+	});
+}
+
+export async function installSkillAsync(
+	source: string,
+	agents: string[],
+	options: { runner?: "auto" | "npx" | "bunx"; global?: boolean } = {}
+): Promise<{ success: boolean; output: string }> {
+	const agentFlag = agents.length > 0 ? `-a ${agents.join(" ")}` : "-a '*'";
+	const globalFlag = options.global ? "-g" : "";
+	const resolvedRunner = getRunner(options.runner || "auto");
+	const cmd = `${resolvedRunner} skills add ${source} ${agentFlag} ${globalFlag} -y`.replace(/\s+/g, " ").trim();
+	return execAsync(cmd);
+}
+
+export async function removeSkillAsync(skillName: string, runner: "auto" | "npx" | "bunx" = "auto"): Promise<{ success: boolean; output: string }> {
+	const resolvedRunner = getRunner(runner);
+	const cmd = `${resolvedRunner} skills remove ${skillName} -y`;
+	const result = await execAsync(cmd, 30000);
+	cleanupCopies(skillName);
+	return { success: true, output: result.output || `Cleaned ${skillName}` };
+}
+
+export async function updateAllSkillsAsync(runner: "auto" | "npx" | "bunx" = "auto"): Promise<{ success: boolean; output: string; count: number }> {
+	const resolvedRunner = getRunner(runner);
+	const cmd = `${resolvedRunner} skills update`;
+	const result = await execAsync(cmd);
+	const match = result.output.match(/Updated (\d+) skill/);
+	return { ...result, count: match ? parseInt(match[1]) : 0 };
 }
 
 export function formatInstalls(n: number): string {

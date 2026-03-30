@@ -1,7 +1,7 @@
 import { Notice, setIcon, type App } from "obsidian";
 import { shell } from "electron";
 import { isSkillkitAvailable, runSkillkitJson, runSkillkitAction } from "../skillkit";
-import { updateAllSkills } from "../marketplace";
+import { updateAllSkillsAsync } from "../marketplace";
 import { showConfirmModal } from "./confirm-modal";
 
 interface StatsJson {
@@ -174,8 +174,7 @@ export class DashboardPanel {
 		updateBtn.addEventListener("click", () => {
 			updateBtn.setText("Updating...");
 			updateBtn.disabled = true;
-			setTimeout(() => {
-				const result = updateAllSkills();
+			void updateAllSkillsAsync().then((result) => {
 				if (result.success) {
 					const msg = result.count > 0 ? `Updated ${result.count} skill(s)` : "All skills up to date";
 					new Notice(msg, 5000);
@@ -187,7 +186,7 @@ export class DashboardPanel {
 				}
 				updateBtn.setText("Update skills");
 				updateBtn.disabled = false;
-			}, 10);
+			});
 		});
 
 		const scanBtn = buttons.createEl("button", { cls: "as-action-btn", text: "Scan sessions" });

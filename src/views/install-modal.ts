@@ -1,5 +1,5 @@
 import { Modal, Notice, Setting, type App } from "obsidian";
-import { installSkill, VALID_AGENTS, TOOL_TO_AGENT, type MarketplaceSkill } from "../marketplace";
+import { installSkillAsync, VALID_AGENTS, TOOL_TO_AGENT, type MarketplaceSkill } from "../marketplace";
 import { getInstalledTools } from "../scanner";
 import { TOOL_SVGS, renderToolIcon } from "../tool-icons";
 import type { ChopsSettings } from "../types";
@@ -120,12 +120,10 @@ export class InstallSkillModal extends Modal {
 		btnEl.setText("Installing...");
 		btnEl.disabled = true;
 
-		setTimeout(() => {
-			const result = installSkill(this.skill.source, agents, {
-				runner: this.settings.packageRunner,
-				global: this.isGlobal,
-			});
-
+		void installSkillAsync(this.skill.source, agents, {
+			runner: this.settings.packageRunner,
+			global: this.isGlobal,
+		}).then((result) => {
 			if (result.success) {
 				new Notice(`Installed ${this.skill.name}`, 5000);
 				this.skill.installed = true;
@@ -136,7 +134,7 @@ export class InstallSkillModal extends Modal {
 				btnEl.setText("Install");
 				btnEl.disabled = false;
 			}
-		}, 10);
+		});
 	}
 
 	onClose(): void {

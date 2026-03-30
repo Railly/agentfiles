@@ -1,8 +1,8 @@
-import { MarkdownRenderer, Notice, setIcon, type App } from "obsidian";
+import { Component, MarkdownRenderer, Notice, setIcon, type App } from "obsidian";
 import { existsSync, readFileSync, writeFileSync } from "fs";
 import { join } from "path";
 import { homedir } from "os";
-import { searchSkills, fetchSkillContent, formatInstalls, getPopularSkills, removeSkill, refreshInstalledStatus, type MarketplaceSkill } from "../marketplace";
+import { searchSkills, fetchSkillContent, formatInstalls, getPopularSkills, removeSkillAsync, refreshInstalledStatus, type MarketplaceSkill } from "../marketplace";
 import type { ChopsSettings } from "../types";
 import { InstallSkillModal } from "./install-modal";
 import { showConfirmModal } from "./confirm-modal";
@@ -12,6 +12,7 @@ const POPULAR_CACHE_FILE = join(homedir(), ".skillkit", "marketplace-popular.jso
 let cachedPopular: MarketplaceSkill[] | null = null;
 let cachedSearchQuery = "";
 let cachedSearchResults: MarketplaceSkill[] | null = null;
+const renderComponent = new Component();
 
 function loadPopularFromDisk(): void {
 	if (cachedPopular) return;
@@ -93,6 +94,20 @@ export class MarketplacePanel {
 		cachedPopular = popular;
 		savePopularToDisk();
 		this.showPopular();
+	}
+
+	private refreshList(): void {
+		if (cachedPopular) {
+			refreshInstalledStatus(cachedPopular);
+		}
+		if (cachedSearchResults) {
+			refreshInstalledStatus(cachedSearchResults);
+		}
+		if (cachedSearchQuery.length >= 2 && cachedSearchResults) {
+			this.showResults(cachedSearchResults);
+		} else {
+			this.showPopular();
+		}
 	}
 
 	private showPopular(): void {
@@ -197,19 +212,19 @@ export class MarketplacePanel {
 				showConfirmModal(this.app, "Uninstall skill", `Remove "${skill.name}" from all agents?`, () => {
 					uninstallBtn.setText("Removing...");
 					uninstallBtn.disabled = true;
-					setTimeout(() => {
-						const result = removeSkill(skill.name, this.settings.packageRunner);
+					void removeSkillAsync(skill.name, this.settings.packageRunner).then((result) => {
 						if (result.success) {
 							new Notice(`Removed ${skill.name}`, 5000);
 							skill.installed = false;
 							this.onRefresh();
+							this.refreshList();
 							void this.showPreview(skill);
 						} else {
 							new Notice(`Failed: ${result.output.slice(0, 200)}`, 5000);
 							uninstallBtn.setText("Uninstall");
 							uninstallBtn.disabled = false;
 						}
-					}, 10);
+					});
 				});
 			});
 		}
@@ -228,7 +243,7 @@ export class MarketplacePanel {
 				content,
 				rendered,
 				"",
-				null as unknown as import("obsidian").Component
+				renderComponent
 			);
 		} else {
 			contentEl.createDiv({ cls: "as-mp-hint", text: "Could not load skill content." });
@@ -241,6 +256,7 @@ export class MarketplacePanel {
 		btn.addEventListener("click", () => {
 			new InstallSkillModal(this.app, skill, this.settings, () => {
 				this.onRefresh();
+				this.refreshList();
 				void this.showPreview(skill);
 			}).open();
 		});
