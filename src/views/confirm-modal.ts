@@ -43,7 +43,7 @@ class ConfirmModal extends Modal {
 		cancelBtn.addEventListener("click", () => this.close());
 
 		const confirmBtn = buttons.createEl("button", {
-			cls: "as-confirm-action",
+			cls: "as-confirm-action mod-warning",
 			text: "Confirm",
 		});
 		confirmBtn.addEventListener("click", () => {

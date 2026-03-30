@@ -1,5 +1,5 @@
 import { execSync } from "child_process";
-import { existsSync, readFileSync, readdirSync, rmSync } from "fs";
+import { existsSync, readFileSync, readdirSync, rmSync, writeFileSync } from "fs";
 import { join } from "path";
 import { homedir } from "os";
 import { requestUrl } from "obsidian";
@@ -248,6 +248,19 @@ function cleanupCopies(skillName: string): void {
 			} catch { /* empty */ }
 		}
 	}
+	cleanLockFile(skillName);
+}
+
+function cleanLockFile(skillName: string): void {
+	const lockPath = join(HOME, ".agents", ".skill-lock.json");
+	if (!existsSync(lockPath)) return;
+	try {
+		const data = JSON.parse(readFileSync(lockPath, "utf-8"));
+		if (data.skills && data.skills[skillName]) {
+			delete data.skills[skillName];
+			writeFileSync(lockPath, JSON.stringify(data, null, 2) + "\n", "utf-8");
+		}
+	} catch { /* empty */ }
 }
 
 export function removeSkill(skillName: string, runner: "auto" | "npx" | "bunx" = "auto"): { success: boolean; output: string } {
