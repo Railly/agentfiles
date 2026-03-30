@@ -98,7 +98,7 @@ export class SkillStore extends Events {
 					uses: 0,
 					lastUsed: null,
 					daysSinceUsed: null,
-					isStale: false,
+					isStale: true,
 					isHeavy: item.content.length > 5000,
 				};
 			}
