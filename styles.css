@@ -1750,12 +1750,11 @@
 	border-radius: 50%;
 	background: repeating-linear-gradient(
 		-45deg,
-		var(--background-modifier-border),
-		var(--background-modifier-border) 2px,
+		var(--interactive-accent),
+		var(--interactive-accent) 2px,
 		transparent 2px,
 		transparent 4px
 	);
-	opacity: 0.5;
 }
 
 .as-install-modal .modal-content {
