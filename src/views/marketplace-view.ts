@@ -217,7 +217,6 @@ export class MarketplacePanel {
 						if (result.success) {
 							new Notice(`Removed ${skill.name}`, 5000);
 							skill.installed = false;
-							this.onRefresh();
 							this.refreshList();
 							void this.showPreview(skill);
 						} else {
@@ -256,7 +255,6 @@ export class MarketplacePanel {
 
 		btn.addEventListener("click", () => {
 			new InstallSkillModal(this.app, skill, this.settings, () => {
-				this.onRefresh();
 				this.refreshList();
 				void this.showPreview(skill);
 			}).open();
