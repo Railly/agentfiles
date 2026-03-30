@@ -4,13 +4,17 @@ import type { ChopsSettings } from "../types";
 import { InstallSkillModal } from "./install-modal";
 import { showConfirmModal } from "./confirm-modal";
 
+let cachedPopular: MarketplaceSkill[] | null = null;
+let cachedSearchQuery = "";
+let cachedSearchResults: MarketplaceSkill[] | null = null;
+
 export class MarketplacePanel {
 	private containerEl: HTMLElement;
+	private inputEl: HTMLInputElement | null = null;
 	private listEl: HTMLElement | null = null;
 	private previewEl: HTMLElement | null = null;
 	private searchTimer: ReturnType<typeof setTimeout> | null = null;
 	private selectedSkill: MarketplaceSkill | null = null;
-	private popularCache: MarketplaceSkill[] = [];
 	private app: App;
 	private settings: ChopsSettings;
 	private onRefresh: () => void;
@@ -23,29 +27,38 @@ export class MarketplacePanel {
 	}
 
 	render(): void {
-		this.containerEl.empty();
-		this.containerEl.addClass("as-marketplace");
+		if (!this.inputEl) {
+			this.containerEl.empty();
+			this.containerEl.addClass("as-marketplace");
 
-		const searchContainer = this.containerEl.createDiv("as-mp-search");
-		const input = searchContainer.createEl("input", {
-			type: "text",
-			placeholder: "Search skills on skills.sh...",
-			cls: "as-mp-search-input",
-		});
-		input.addEventListener("input", () => {
-			if (this.searchTimer) clearTimeout(this.searchTimer);
-			this.searchTimer = setTimeout(() => {
-				void this.doSearch(input.value);
-			}, 300);
-		});
+			const searchContainer = this.containerEl.createDiv("as-mp-search");
+			this.inputEl = searchContainer.createEl("input", {
+				type: "text",
+				placeholder: "Search skills on skills.sh...",
+				cls: "as-mp-search-input",
+			});
+			this.inputEl.addEventListener("input", () => {
+				if (this.searchTimer) clearTimeout(this.searchTimer);
+				this.searchTimer = setTimeout(() => {
+					void this.doSearch(this.inputEl!.value);
+				}, 300);
+			});
 
-		const body = this.containerEl.createDiv("as-mp-body");
-		this.listEl = body.createDiv("as-mp-list");
-		this.previewEl = body.createDiv("as-mp-preview");
+			const body = this.containerEl.createDiv("as-mp-body");
+			this.listEl = body.createDiv("as-mp-list");
+			this.previewEl = body.createDiv("as-mp-preview");
+			this.previewEl.createDiv({ cls: "as-mp-hint", text: "Select a skill to preview." });
+		}
 
-		this.previewEl.createDiv({ cls: "as-mp-hint", text: "Select a skill to preview." });
+		this.inputEl.value = cachedSearchQuery;
 
-		void this.loadPopular();
+		if (cachedSearchQuery.length >= 2 && cachedSearchResults) {
+			this.showResults(cachedSearchResults);
+		} else if (cachedPopular) {
+			this.showPopular();
+		} else {
+			void this.loadPopular();
+		}
 	}
 
 	private async loadPopular(): Promise<void> {
@@ -54,7 +67,7 @@ export class MarketplacePanel {
 		this.listEl.createDiv({ cls: "as-mp-loading", text: "Loading popular skills..." });
 
 		const popular = await getPopularSkills();
-		this.popularCache = popular;
+		cachedPopular = popular;
 		this.showPopular();
 	}
 
@@ -62,28 +75,19 @@ export class MarketplacePanel {
 		if (!this.listEl) return;
 		this.listEl.empty();
 
-		if (this.popularCache.length === 0) {
+		if (!cachedPopular || cachedPopular.length === 0) {
 			this.listEl.createDiv({ cls: "as-mp-hint", text: "Search for skills to browse and install." });
 			return;
 		}
 
 		this.listEl.createDiv({ cls: "as-mp-section-title", text: "Popular" });
-		for (const skill of this.popularCache) {
+		for (const skill of cachedPopular) {
 			this.renderSkillCard(skill);
 		}
 	}
 
-	private async doSearch(query: string): Promise<void> {
+	private showResults(results: MarketplaceSkill[]): void {
 		if (!this.listEl) return;
-		if (query.length < 2) {
-			this.showPopular();
-			return;
-		}
-
-		this.listEl.empty();
-		this.listEl.createDiv({ cls: "as-mp-loading", text: "Searching..." });
-
-		const results = await searchSkills(query);
 		this.listEl.empty();
 
 		if (results.length === 0) {
@@ -94,6 +98,24 @@ export class MarketplacePanel {
 		for (const skill of results) {
 			this.renderSkillCard(skill);
 		}
+	}
+
+	private async doSearch(query: string): Promise<void> {
+		if (!this.listEl) return;
+		cachedSearchQuery = query;
+
+		if (query.length < 2) {
+			cachedSearchResults = null;
+			this.showPopular();
+			return;
+		}
+
+		this.listEl.empty();
+		this.listEl.createDiv({ cls: "as-mp-loading", text: "Searching..." });
+
+		const results = await searchSkills(query);
+		cachedSearchResults = results;
+		this.showResults(results);
 	}
 
 	private renderSkillCard(skill: MarketplaceSkill): void {
@@ -190,8 +212,7 @@ export class MarketplacePanel {
 	}
 
 	private renderInstallButton(container: HTMLElement, skill: MarketplaceSkill): void {
-		const row = container.createDiv("as-mp-install-row");
-		const btn = row.createEl("button", { cls: "as-mp-install-btn", text: "Install" });
+		const btn = container.createEl("button", { cls: "as-mp-install-btn", text: "Install" });
 
 		btn.addEventListener("click", () => {
 			new InstallSkillModal(this.app, skill, this.settings, () => {
