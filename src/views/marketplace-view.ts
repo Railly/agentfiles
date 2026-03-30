@@ -1,12 +1,34 @@
 import { MarkdownRenderer, Notice, setIcon, type App } from "obsidian";
+import { existsSync, readFileSync, writeFileSync } from "fs";
+import { join } from "path";
+import { homedir } from "os";
 import { searchSkills, fetchSkillContent, formatInstalls, getPopularSkills, removeSkill, type MarketplaceSkill } from "../marketplace";
 import type { ChopsSettings } from "../types";
 import { InstallSkillModal } from "./install-modal";
 import { showConfirmModal } from "./confirm-modal";
 
+const POPULAR_CACHE_FILE = join(homedir(), ".skillkit", "marketplace-popular.json");
+
 let cachedPopular: MarketplaceSkill[] | null = null;
 let cachedSearchQuery = "";
 let cachedSearchResults: MarketplaceSkill[] | null = null;
+
+function loadPopularFromDisk(): void {
+	if (cachedPopular) return;
+	if (!existsSync(POPULAR_CACHE_FILE)) return;
+	try {
+		cachedPopular = JSON.parse(readFileSync(POPULAR_CACHE_FILE, "utf-8"));
+	} catch { /* empty */ }
+}
+
+function savePopularToDisk(): void {
+	if (!cachedPopular) return;
+	try {
+		writeFileSync(POPULAR_CACHE_FILE, JSON.stringify(cachedPopular), "utf-8");
+	} catch { /* empty */ }
+}
+
+loadPopularFromDisk();
 
 export class MarketplacePanel {
 	private containerEl: HTMLElement;
@@ -68,6 +90,7 @@ export class MarketplacePanel {
 
 		const popular = await getPopularSkills();
 		cachedPopular = popular;
+		savePopularToDisk();
 		this.showPopular();
 	}
 
