@@ -92,7 +92,7 @@ export class ListPanel {
 				item.addClass("is-active");
 			}
 			if (f.cls) {
-				const badge = item.createSpan({ cls: f.cls, text: f.label });
+				item.createSpan({ cls: f.cls, text: f.label });
 			} else {
 				item.setText(f.label);
 			}

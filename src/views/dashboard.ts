@@ -65,11 +65,9 @@ import { join } from "path";
 import { homedir } from "os";
 
 const CACHE_FILE = join(homedir(), ".skillkit", "dashboard-cache.json");
-const CACHE_TTL = 300_000;
 
 let cachedData: DashboardData | null = null;
 let cachedAt: number | null = null;
-let refreshing = false;
 
 function loadDiskCache(): void {
 	if (cachedData) return;
@@ -126,21 +124,6 @@ export class DashboardPanel {
 		}
 	}
 
-	private refreshInBackground(): void {
-		refreshing = true;
-		setTimeout(() => {
-			const data = loadData();
-			cachedData = data;
-			cachedAt = Date.now();
-			saveDiskCache();
-			refreshing = false;
-			if (this.containerEl.hasClass("as-dashboard")) {
-				this.containerEl.empty();
-				this.containerEl.addClass("as-dashboard");
-				this.renderDashboard(data);
-			}
-		}, 100);
-	}
 
 	private renderDashboard(data: DashboardData): void {
 		this.renderActionBar(data);
