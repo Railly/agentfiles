@@ -12,8 +12,10 @@
 }
 
 .as-container {
+	--as-sidebar-width: 200px;
+	--as-list-width: 280px;
 	display: grid;
-	grid-template-columns: 200px 280px 1fr;
+	grid-template-columns: var(--as-sidebar-width) 6px var(--as-list-width) 6px 1fr;
 	height: 100%;
 	overflow: hidden;
 }
@@ -36,6 +38,20 @@
 	display: flex;
 	flex-direction: column;
 	overflow: hidden;
+}
+
+/* Resize handles */
+.as-resize-handle {
+	width: 6px;
+	background: transparent;
+	cursor: col-resize;
+	transition: background 0.15s;
+	z-index: 1;
+}
+
+.as-resize-handle:hover,
+.as-resize-handle.is-dragging {
+	background: var(--interactive-accent);
 }
 
 /* Sidebar */
