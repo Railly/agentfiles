@@ -9,6 +9,7 @@ export class MarketplacePanel {
 	private previewEl: HTMLElement | null = null;
 	private searchTimer: ReturnType<typeof setTimeout> | null = null;
 	private selectedSkill: MarketplaceSkill | null = null;
+	private popularCache: MarketplaceSkill[] = [];
 	private app: { app: { workspace: unknown } };
 
 	constructor(containerEl: HTMLElement, app: { app: { workspace: unknown } }) {
@@ -48,15 +49,21 @@ export class MarketplacePanel {
 		this.listEl.createDiv({ cls: "as-mp-loading", text: "Loading popular skills..." });
 
 		const popular = await getPopularSkills();
+		this.popularCache = popular;
+		this.showPopular();
+	}
+
+	private showPopular(): void {
+		if (!this.listEl) return;
 		this.listEl.empty();
 
-		if (popular.length === 0) {
+		if (this.popularCache.length === 0) {
 			this.listEl.createDiv({ cls: "as-mp-hint", text: "Search for skills to browse and install." });
 			return;
 		}
 
 		this.listEl.createDiv({ cls: "as-mp-section-title", text: "Popular" });
-		for (const skill of popular) {
+		for (const skill of this.popularCache) {
 			this.renderSkillCard(skill);
 		}
 	}
@@ -64,8 +71,7 @@ export class MarketplacePanel {
 	private async doSearch(query: string): Promise<void> {
 		if (!this.listEl) return;
 		if (query.length < 2) {
-			this.listEl.empty();
-			this.listEl.createDiv({ cls: "as-mp-hint", text: "Type at least 2 characters to search." });
+			this.showPopular();
 			return;
 		}
 
