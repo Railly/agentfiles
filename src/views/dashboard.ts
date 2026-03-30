@@ -57,6 +57,9 @@ function loadData(): DashboardData {
 	};
 }
 
+let cachedData: DashboardData | null = null;
+let cachedAt: number | null = null;
+
 export class DashboardPanel {
 	private containerEl: HTMLElement;
 	private app: App;
@@ -75,24 +78,51 @@ export class DashboardPanel {
 			return;
 		}
 
-		const loading = this.containerEl.createDiv("as-dash-loading");
-		loading.createDiv("as-dash-spinner");
-		loading.createDiv({ cls: "as-dash-loading-text", text: "Loading analytics..." });
+		if (cachedData) {
+			this.renderDashboard(cachedData);
+			this.refreshInBackground();
+		} else {
+			const loading = this.containerEl.createDiv("as-dash-loading");
+			loading.createDiv("as-dash-spinner");
+			loading.createDiv({ cls: "as-dash-loading-text", text: "Loading analytics..." });
 
+			setTimeout(() => {
+				const data = loadData();
+				cachedData = data;
+				cachedAt = Date.now();
+				loading.remove();
+				this.renderDashboard(data);
+			}, 10);
+		}
+	}
+
+	private refreshInBackground(): void {
 		setTimeout(() => {
 			const data = loadData();
-			loading.remove();
+			cachedData = data;
+			cachedAt = Date.now();
+			this.containerEl.empty();
+			this.containerEl.addClass("as-dashboard");
+			this.renderDashboard(data);
+		}, 50);
+	}
 
-			if (data.stats) this.renderOverview(data.stats, data.health);
-			if (data.stats) this.renderTopSkills(data.stats);
-			if (data.health || data.context) {
-				const row = this.containerEl.createDiv("as-dash-row");
-				if (data.health) this.renderHealth(data.health, row);
-				if (data.context) this.renderContext(data.context, row);
-			}
-			if (data.burn) this.renderBurn(data.burn);
-			if (data.health) this.renderStale(data.health);
-		}, 10);
+	private renderDashboard(data: DashboardData): void {
+		if (cachedAt) {
+			const ago = Math.round((Date.now() - cachedAt) / 1000);
+			const label = ago < 5 ? "just now" : ago < 60 ? `${ago}s ago` : `${Math.round(ago / 60)}m ago`;
+			this.containerEl.createDiv({ cls: "as-dash-updated", text: `Updated ${label}` });
+		}
+
+		if (data.stats) this.renderOverview(data.stats, data.health);
+		if (data.stats) this.renderTopSkills(data.stats);
+		if (data.health || data.context) {
+			const row = this.containerEl.createDiv("as-dash-row");
+			if (data.health) this.renderHealth(data.health, row);
+			if (data.context) this.renderContext(data.context, row);
+		}
+		if (data.burn) this.renderBurn(data.burn);
+		if (data.health) this.renderStale(data.health);
 	}
 
 	private renderNoSkillkit(): void {

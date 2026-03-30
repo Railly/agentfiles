@@ -1574,3 +1574,10 @@
 	opacity: 0.5;
 	cursor: not-allowed;
 }
+
+.as-dash-updated {
+	font-size: var(--font-smallest);
+	color: var(--text-faint);
+	text-align: right;
+	margin-bottom: 4px;
+}
