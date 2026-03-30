@@ -154,12 +154,12 @@ export class MarketplacePanel {
 					setTimeout(() => {
 						const result = removeSkill(skill.name, this.settings.packageRunner);
 						if (result.success) {
-							new Notice(`Removed ${skill.name}`);
+							new Notice(`Removed ${skill.name}`, 5000);
 							skill.installed = false;
 							this.onRefresh();
 							void this.showPreview(skill);
 						} else {
-							new Notice(`Failed: ${result.output.slice(0, 200)}`);
+							new Notice(`Failed: ${result.output.slice(0, 200)}`, 5000);
 							uninstallBtn.setText("Uninstall");
 							uninstallBtn.disabled = false;
 						}

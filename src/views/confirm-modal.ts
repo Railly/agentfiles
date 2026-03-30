@@ -1,4 +1,4 @@
-import { Modal, Setting, type App } from "obsidian";
+import { Modal, type App } from "obsidian";
 
 export function showConfirmModal(
 	app: App,
@@ -24,24 +24,32 @@ class ConfirmModal extends Modal {
 
 	onOpen(): void {
 		const { contentEl } = this;
-		contentEl.createEl("h3", { text: this.title });
-		contentEl.createEl("p", { text: this.message });
+		contentEl.addClass("as-confirm-modal");
 
-		new Setting(contentEl)
-			.addButton((btn) =>
-				btn
-					.setButtonText("Cancel")
-					.onClick(() => this.close())
-			)
-			.addButton((btn) =>
-				btn
-					.setButtonText("Confirm")
-					.setWarning()
-					.onClick(() => {
-						this.close();
-						this.onConfirm();
-					})
-			);
+		contentEl.createEl("p", {
+			cls: "as-confirm-title",
+			text: this.title,
+		});
+		contentEl.createEl("p", {
+			cls: "as-confirm-message",
+			text: this.message,
+		});
+
+		const buttons = contentEl.createDiv("as-confirm-buttons");
+		const cancelBtn = buttons.createEl("button", {
+			cls: "as-confirm-cancel",
+			text: "Cancel",
+		});
+		cancelBtn.addEventListener("click", () => this.close());
+
+		const confirmBtn = buttons.createEl("button", {
+			cls: "as-confirm-action",
+			text: "Confirm",
+		});
+		confirmBtn.addEventListener("click", () => {
+			this.close();
+			this.onConfirm();
+		});
 	}
 
 	onClose(): void {

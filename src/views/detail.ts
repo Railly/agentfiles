@@ -146,11 +146,11 @@ export class DetailPanel {
 				showConfirmModal(this.app, "Remove skill", `Remove "${item.name}"? This will delete the skill files.`, () => {
 					const result = runSkillkitAction(`prune --skill ${item.name} --yes`);
 					if (result.success) {
-						new Notice(`Removed ${item.name}`);
+						new Notice(`Removed ${item.name}`, 5000);
 						this.store.refresh(this.settings);
 						this.clear();
 					} else {
-						new Notice(`Failed to remove: ${result.output}`);
+						new Notice(`Failed to remove: ${result.output}`, 5000);
 					}
 				});
 			});
@@ -315,10 +315,10 @@ export class DetailPanel {
 			showConfirmModal(this.app, "Remove skill", `Remove "${item.name}"? This will delete the skill files.`, () => {
 				const result = runSkillkitAction(`prune --skill ${item.name} --yes`);
 				if (result.success) {
-					new Notice(`Removed ${item.name}`);
+					new Notice(`Removed ${item.name}`, 5000);
 					this.store.refresh(this.settings);
 				} else {
-					new Notice(`Failed to remove: ${result.output}`);
+					new Notice(`Failed to remove: ${result.output}`, 5000);
 				}
 			});
 		});
@@ -365,9 +365,9 @@ export class DetailPanel {
 		try {
 			writeFileSync(item.filePath, content, "utf-8");
 			item.content = content;
-			new Notice(`Saved ${item.name}`);
+			new Notice(`Saved ${item.name}`, 5000);
 		} catch (e: unknown) {
-			new Notice(`Failed to save: ${e instanceof Error ? e.message : String(e)}`);
+			new Notice(`Failed to save: ${e instanceof Error ? e.message : String(e)}`, 5000);
 		}
 	}
 }

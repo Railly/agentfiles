@@ -1601,3 +1601,56 @@
 	font-size: 10px;
 	color: var(--text-faint);
 }
+
+/* Confirm modal */
+.as-confirm-modal {
+	padding: 0;
+}
+
+.as-confirm-title {
+	font-size: var(--font-ui-medium);
+	font-weight: 600;
+	color: var(--text-normal);
+	margin: 0 0 8px;
+}
+
+.as-confirm-message {
+	font-size: var(--font-ui-small);
+	color: var(--text-muted);
+	margin: 0 0 16px;
+}
+
+.as-confirm-buttons {
+	display: flex;
+	justify-content: flex-end;
+	gap: 8px;
+}
+
+.as-confirm-cancel {
+	padding: 6px 16px;
+	border-radius: var(--radius-s);
+	border: 1px solid var(--background-modifier-border);
+	background: none;
+	color: var(--text-normal);
+	cursor: pointer;
+	font-size: var(--font-ui-small);
+}
+
+.as-confirm-cancel:hover {
+	background: var(--background-modifier-hover);
+}
+
+.as-confirm-action {
+	padding: 6px 16px;
+	border-radius: var(--radius-s);
+	border: none;
+	background: var(--background-modifier-error);
+	color: var(--text-on-accent);
+	cursor: pointer;
+	font-size: var(--font-ui-small);
+	font-weight: 500;
+}
+
+.as-confirm-action:hover {
+	opacity: 0.9;
+}

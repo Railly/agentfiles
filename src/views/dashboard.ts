@@ -164,10 +164,10 @@ export class DashboardPanel {
 			setTimeout(() => {
 				const result = runSkillkitAction("scan");
 				if (result.success) {
-					new Notice("Scan complete");
+					new Notice("Scan complete", 5000);
 					this.render();
 				} else {
-					new Notice(`Scan failed: ${result.output}`);
+					new Notice(`Scan failed: ${result.output}`, 5000);
 				}
 				scanBtn.setText("Scan sessions");
 				scanBtn.disabled = false;
@@ -316,10 +316,10 @@ export class DashboardPanel {
 			setTimeout(() => {
 				const result = runSkillkitAction("prune --yes");
 				if (result.success) {
-					new Notice(`Pruned stale skills`);
+					new Notice(`Pruned stale skills`, 5000);
 					this.render();
 				} else {
-					new Notice(`Prune failed: ${result.output}`);
+					new Notice(`Prune failed: ${result.output}`, 5000);
 				}
 				pruneBtn.setText("Prune all");
 				pruneBtn.disabled = false;

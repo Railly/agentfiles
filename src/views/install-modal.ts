@@ -84,7 +84,7 @@ export class InstallSkillModal extends Modal {
 	private doInstall(btnEl: HTMLButtonElement): void {
 		const agents = [...this.selectedAgents];
 		if (agents.length === 0) {
-			new Notice("Select at least one agent");
+			new Notice("Select at least one agent", 5000);
 			return;
 		}
 
@@ -98,12 +98,12 @@ export class InstallSkillModal extends Modal {
 			});
 
 			if (result.success) {
-				new Notice(`Installed ${this.skill.name}`);
+				new Notice(`Installed ${this.skill.name}`, 5000);
 				this.skill.installed = true;
 				this.onInstalled();
 				this.close();
 			} else {
-				new Notice(`Failed: ${result.output.slice(0, 200)}`);
+				new Notice(`Failed: ${result.output.slice(0, 200)}`, 5000);
 				btnEl.setText("Install");
 				btnEl.disabled = false;
 			}

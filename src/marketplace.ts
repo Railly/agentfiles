@@ -230,7 +230,7 @@ function getInstalledNames(): Set<string> {
 
 export function removeSkill(skillName: string, runner: "auto" | "npx" | "bunx" = "auto"): { success: boolean; output: string } {
 	const resolvedRunner = getRunner(runner);
-	const cmd = `${resolvedRunner} skills remove ${skillName} --all`;
+	const cmd = `${resolvedRunner} skills remove ${skillName} -y`;
 	try {
 		const out = execSync(cmd, {
 			encoding: "utf-8",
