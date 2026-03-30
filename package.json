@@ -1,16 +1,21 @@
 {
-	"name": "agentfiles",
-	"version": "0.2.1",
-	"description": "AI Skills Manager for Obsidian",
-	"main": "main.js",
-	"scripts": {
-		"dev": "node esbuild.config.mjs",
-		"build": "node esbuild.config.mjs production"
-	},
-	"devDependencies": {
-		"@types/node": "^22.0.0",
-		"esbuild": "^0.25.0",
-		"obsidian": "latest",
-		"typescript": "^5.7.0"
-	}
+  "name": "agentfiles",
+  "version": "0.3.0",
+  "description": "AI Skills Manager for Obsidian",
+  "main": "main.js",
+  "scripts": {
+    "dev": "node esbuild.config.mjs",
+    "build": "node esbuild.config.mjs production",
+    "lint": "eslint src/"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.57.2",
+    "@typescript-eslint/parser": "^8.57.2",
+    "esbuild": "^0.25.0",
+    "eslint": "9",
+    "eslint-plugin-obsidian": "^2.29.0",
+    "obsidian": "latest",
+    "typescript": "^5.7.0"
+  }
 }
