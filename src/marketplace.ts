@@ -148,15 +148,22 @@ function getRunner(): string {
 export function installSkill(source: string, agents: string[]): { success: boolean; output: string } {
 	const agentFlag = agents.length > 0 ? `-a ${agents.join(" ")}` : "-a '*'";
 	const runner = getRunner();
+	const cmd = `${runner} skills add ${source} ${agentFlag} -y`;
 	try {
-		const out = execSync(`${runner} skills add ${source} ${agentFlag} -y`, {
+		const out = execSync(cmd, {
 			encoding: "utf-8",
-			timeout: 60000,
+			timeout: 120000,
 			env: { ...process.env, PATH: buildPath(), NO_COLOR: "1" },
-			stdio: ["pipe", "pipe", "pipe"],
+			stdio: ["pipe", "pipe", "ignore"],
 		}).trim();
 		return { success: true, output: out };
-	} catch (e: unknown) { /* empty */
+	} catch (e: unknown) {
+		if (e && typeof e === "object" && "stdout" in e) {
+			const stdout = String((e as { stdout: unknown }).stdout || "");
+			if (stdout.includes("Done") || stdout.includes("Installed")) {
+				return { success: true, output: stdout };
+			}
+		}
 		return { success: false, output: e instanceof Error ? e.message : "Install failed" };
 	}
 }
