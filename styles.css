@@ -263,6 +263,8 @@
 	padding: 10px 16px 8px;
 	border-bottom: 1px solid var(--background-modifier-border);
 	flex-shrink: 0;
+	-webkit-user-select: text;
+	user-select: text;
 }
 
 .as-toolbar-top {
@@ -409,6 +411,9 @@
 	flex: 1;
 	overflow-y: auto;
 	min-height: 0;
+	-webkit-user-select: text;
+	user-select: text;
+	cursor: text;
 }
 
 .as-detail-preview {
