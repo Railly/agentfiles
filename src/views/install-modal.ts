@@ -117,8 +117,8 @@ export class InstallSkillModal extends Modal {
 		lastSelectedAgents = new Set(this.selectedAgents);
 		lastIsGlobal = this.isGlobal;
 
-		btnEl.setText("Installing...");
-		btnEl.disabled = true;
+		this.close();
+		new Notice(`Installing ${this.skill.name}...`, 3000);
 
 		void installSkillAsync(this.skill.source, agents, {
 			runner: this.settings.packageRunner,
@@ -128,11 +128,8 @@ export class InstallSkillModal extends Modal {
 				new Notice(`Installed ${this.skill.name}`, 5000);
 				this.skill.installed = true;
 				this.onInstalled();
-				this.close();
 			} else {
-				new Notice(`Failed: ${result.output.slice(0, 200)}`, 5000);
-				btnEl.setText("Install");
-				btnEl.disabled = false;
+				new Notice(`Failed to install ${this.skill.name}`, 5000);
 			}
 		});
 	}

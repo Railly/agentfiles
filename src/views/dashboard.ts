@@ -110,10 +110,6 @@ export class DashboardPanel {
 
 		if (cachedData) {
 			this.renderDashboard(cachedData);
-			const stale = !cachedAt || (Date.now() - cachedAt) > CACHE_TTL;
-			if (stale && !refreshing) {
-				this.refreshInBackground();
-			}
 		} else {
 			const loading = this.containerEl.createDiv("as-dash-loading");
 			loading.createDiv("as-dash-spinner");

@@ -212,6 +212,7 @@ export class MarketplacePanel {
 				showConfirmModal(this.app, "Uninstall skill", `Remove "${skill.name}" from all agents?`, () => {
 					uninstallBtn.setText("Removing...");
 					uninstallBtn.disabled = true;
+					new Notice(`Removing ${skill.name}...`, 3000);
 					void removeSkillAsync(skill.name, this.settings.packageRunner).then((result) => {
 						if (result.success) {
 							new Notice(`Removed ${skill.name}`, 5000);
@@ -220,7 +221,7 @@ export class MarketplacePanel {
 							this.refreshList();
 							void this.showPreview(skill);
 						} else {
-							new Notice(`Failed: ${result.output.slice(0, 200)}`, 5000);
+							new Notice(`Failed to remove ${skill.name}`, 5000);
 							uninstallBtn.setText("Uninstall");
 							uninstallBtn.disabled = false;
 						}
