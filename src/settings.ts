@@ -59,6 +59,37 @@ export class AgentfilesSettingTab extends PluginSettingTab {
 					})
 			);
 
+		new Setting(containerEl)
+			.setName("Deep search by default")
+			.setDesc(
+				"Enable deep search when the view opens (can always be toggled in the search bar)"
+			)
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.deepSearchDefault ?? false)
+					.onChange(async (value) => {
+						this.plugin.settings.deepSearchDefault = value;
+						await this.plugin.saveSettings();
+					})
+			);
+
+		new Setting(containerEl)
+			.setName("Deep search scope")
+			.setDesc("What to include when deep search is enabled")
+			.addDropdown((drop) =>
+				drop
+					.addOptions({
+						both: "Description and file content",
+						description: "Description only",
+						content: "File content only",
+					})
+					.setValue(this.plugin.settings.deepSearchScope ?? "both")
+					.onChange(async (value) => {
+						this.plugin.settings.deepSearchScope = value as "description" | "content" | "both";
+						await this.plugin.saveSettings();
+					})
+			);
+
 		new Setting(containerEl).setName("Marketplace").setHeading();
 
 		new Setting(containerEl)

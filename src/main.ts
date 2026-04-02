@@ -35,6 +35,8 @@ export default class AgentfilesPlugin extends Plugin {
 		this.addSettingTab(new AgentfilesSettingTab(this.app, this));
 
 		this.refreshStore();
+		this.store.setDeepSearch(this.settings.deepSearchDefault ?? false);
+		this.store.setDeepSearchScope(this.settings.deepSearchScope ?? "both");
 		this.startWatcher();
 	}
 

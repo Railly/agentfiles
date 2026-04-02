@@ -132,12 +132,16 @@
 
 /* Search */
 .as-search {
+	display: flex;
+	align-items: center;
+	gap: 4px;
 	padding: 8px;
 	border-bottom: 1px solid var(--background-modifier-border);
 }
 
 .as-search-input {
-	width: 100%;
+	flex: 1;
+	min-width: 0;
 	padding: 6px 10px;
 	border: 1px solid var(--background-modifier-border);
 	border-radius: var(--radius-s);
@@ -150,6 +154,36 @@
 .as-search-input:focus {
 	border-color: var(--interactive-accent);
 	box-shadow: 0 0 0 2px color-mix(in srgb, var(--interactive-accent) 25%, transparent);
+}
+
+.as-deep-toggle {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	height: 28px;
+	flex-shrink: 0;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-s);
+	background: var(--background-primary);
+	color: var(--text-faint);
+	cursor: pointer;
+}
+
+.as-deep-toggle:hover {
+	color: var(--text-muted);
+	border-color: var(--text-faint);
+}
+
+.as-deep-toggle.is-active {
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+	border-color: var(--interactive-accent);
+}
+
+.as-deep-toggle svg {
+	width: 14px;
+	height: 14px;
 }
 
 /* List */

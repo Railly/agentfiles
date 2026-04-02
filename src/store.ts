@@ -1,5 +1,5 @@
 import { Events } from "obsidian";
-import type { SkillItem, SidebarFilter, ChopsSettings } from "./types";
+import type { SkillItem, SidebarFilter, DeepSearchScope, ChopsSettings } from "./types";
 import { scanAll, getProjectName } from "./scanner";
 import { getSkillkitStatsWithDaily, getSkillConflicts, getSkillWarnings, isSkillkitAvailable } from "./skillkit";
 
@@ -7,6 +7,8 @@ export class SkillStore extends Events {
 	private items: Map<string, SkillItem> = new Map();
 	private _filter: SidebarFilter = { kind: "all" };
 	private _searchQuery = "";
+	private _deepSearch = false;
+	private _deepSearchScope: DeepSearchScope = "both";
 	private _projectsHomeDir = "";
 
 	get filter(): SidebarFilter {
@@ -15,6 +17,10 @@ export class SkillStore extends Events {
 
 	get searchQuery(): string {
 		return this._searchQuery;
+	}
+
+	get deepSearch(): boolean {
+		return this._deepSearch;
 	}
 
 	get allItems(): SkillItem[] {
@@ -50,9 +56,13 @@ export class SkillStore extends Events {
 
 		if (this._searchQuery) {
 			const q = this._searchQuery.toLowerCase();
+			const searchDesc = this._deepSearch && (this._deepSearchScope === "description" || this._deepSearchScope === "both");
+			const searchContent = this._deepSearch && (this._deepSearchScope === "content" || this._deepSearchScope === "both");
 			result = result.filter(
 				(i) =>
-					i.name.toLowerCase().includes(q)
+					i.name.toLowerCase().includes(q) ||
+					(searchDesc && i.description.toLowerCase().includes(q)) ||
+					(searchContent && i.content.toLowerCase().includes(q))
 			);
 		}
 
@@ -123,6 +133,18 @@ export class SkillStore extends Events {
 
 	setSearch(query: string): void {
 		this._searchQuery = query;
+		this.trigger("updated");
+	}
+
+	setDeepSearch(enabled: boolean): void {
+		if (this._deepSearch === enabled) return;
+		this._deepSearch = enabled;
+		this.trigger("updated");
+	}
+
+	setDeepSearchScope(scope: DeepSearchScope): void {
+		if (this._deepSearchScope === scope) return;
+		this._deepSearchScope = scope;
 		this.trigger("updated");
 	}
 

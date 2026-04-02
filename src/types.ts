@@ -68,10 +68,14 @@ export type SidebarFilter =
 
 export type NamingMode = "auto" | "filename";
 
+export type DeepSearchScope = "description" | "content" | "both";
+
 export interface ChopsSettings {
 	tools: Record<string, { enabled: boolean; customPaths: string[] }>;
 	watchEnabled: boolean;
 	watchDebounceMs: number;
+	deepSearchDefault: boolean;
+	deepSearchScope: DeepSearchScope;
 	favorites: string[];
 	collections: Record<string, string[]>;
 	customScanPaths: string[];
@@ -85,6 +89,8 @@ export const DEFAULT_SETTINGS: ChopsSettings = {
 	tools: {},
 	watchEnabled: true,
 	watchDebounceMs: 500,
+	deepSearchDefault: false,
+	deepSearchScope: "both",
 	favorites: [],
 	collections: {},
 	customScanPaths: [],

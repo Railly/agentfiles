@@ -10,6 +10,7 @@ export class ListPanel {
 	private onSelect: (item: SkillItem) => void;
 	private selectedId: string | null = null;
 	private inputEl: HTMLInputElement | null = null;
+	private deepToggleEl: HTMLElement | null = null;
 	private listEl: HTMLElement | null = null;
 	private typeFilter: string | null = null;
 	private sortBy: "name" | "usage" = "name";
@@ -44,6 +45,14 @@ export class ListPanel {
 				this.store.setSearch(this.inputEl!.value);
 			});
 
+			this.deepToggleEl = searchContainer.createDiv("as-deep-toggle");
+			setIcon(this.deepToggleEl, "search-code");
+			this.deepToggleEl.setAttribute("aria-label", "Toggle deep search");
+			this.deepToggleEl.addEventListener("click", () => {
+				this.store.setDeepSearch(!this.store.deepSearch);
+				this.updateDeepToggle();
+			});
+
 			const filterBtn = searchContainer.createDiv("as-filter-btn");
 			setIcon(filterBtn, "filter");
 			filterBtn.setAttribute("aria-label", "Filter by status");
@@ -66,7 +75,19 @@ export class ListPanel {
 		}
 
 		this.inputEl.value = this.store.searchQuery;
+		this.updateDeepToggle();
 		this.renderList();
+	}
+
+	private updateDeepToggle(): void {
+		if (!this.deepToggleEl) return;
+		this.deepToggleEl.toggleClass("is-active", this.store.deepSearch);
+		this.deepToggleEl.setAttribute(
+			"aria-label",
+			this.store.deepSearch
+				? "Deep search enabled — click to search names only"
+				: "Deep search disabled — click to search file content"
+		);
 	}
 
 	private toggleDropdown(anchor: HTMLElement): void {
