@@ -7,6 +7,20 @@ const HOME = homedir();
 const IS_WIN = platform() === "win32";
 const XDG_CONFIG = process.env.XDG_CONFIG_HOME || (IS_WIN ? join(HOME, ".config") : join(HOME, ".config"));
 
+const _installCache = new Map<string, boolean>();
+
+export function clearInstallCache(): void {
+	_installCache.clear();
+}
+
+function cached(id: string, check: () => boolean): boolean {
+	const hit = _installCache.get(id);
+	if (hit !== undefined) return hit;
+	const result = check();
+	_installCache.set(id, result);
+	return result;
+}
+
 function appExists(name: string): boolean {
 	if (IS_WIN) {
 		const programFiles = process.env.ProgramFiles || "C:\\Program Files";
@@ -83,10 +97,10 @@ export const TOOL_CONFIGS: ToolConfig[] = [
 				pattern: "flat-md",
 			},
 		],
-		isInstalled: () =>
+		isInstalled: () => cached("claude-code", () =>
 			existsSync(join(HOME, ".claude", "settings.json")) ||
 			existsSync(join(HOME, ".claude", "CLAUDE.md")) ||
-			cliExists("claude"),
+			cliExists("claude")),
 	},
 	{
 		id: "cursor",
@@ -112,9 +126,9 @@ export const TOOL_CONFIGS: ToolConfig[] = [
 				pattern: "flat-md",
 			},
 		],
-		isInstalled: () =>
+		isInstalled: () => cached("cursor", () =>
 			appExists("Cursor") ||
-			existsSync(join(HOME, ".cursor", "argv.json")),
+			existsSync(join(HOME, ".cursor", "argv.json"))),
 	},
 	{
 		id: "windsurf",
@@ -134,9 +148,9 @@ export const TOOL_CONFIGS: ToolConfig[] = [
 			},
 		],
 		agentPaths: [],
-		isInstalled: () =>
+		isInstalled: () => cached("windsurf", () =>
 			appExists("Windsurf") ||
-			existsSync(join(HOME, ".codeium", "windsurf", "argv.json")),
+			existsSync(join(HOME, ".codeium", "windsurf", "argv.json"))),
 	},
 	{
 		id: "codex",
@@ -167,10 +181,10 @@ export const TOOL_CONFIGS: ToolConfig[] = [
 				pattern: "flat-md",
 			},
 		],
-		isInstalled: () =>
+		isInstalled: () => cached("codex", () =>
 			existsSync(join(HOME, ".codex", "config.toml")) ||
 			existsSync(join(HOME, ".codex", "auth.json")) ||
-			cliExists("codex"),
+			cliExists("codex")),
 	},
 	{
 		id: "copilot",
@@ -185,8 +199,8 @@ export const TOOL_CONFIGS: ToolConfig[] = [
 			},
 		],
 		agentPaths: [],
-		isInstalled: () =>
-			existsSync(join(HOME, ".copilot")) || cliExists("copilot"),
+		isInstalled: () => cached("copilot", () =>
+			existsSync(join(HOME, ".copilot")) || cliExists("copilot")),
 	},
 	{
 		id: "amp",
@@ -201,10 +215,10 @@ export const TOOL_CONFIGS: ToolConfig[] = [
 			},
 		],
 		agentPaths: [],
-		isInstalled: () =>
+		isInstalled: () => cached("amp", () =>
 			existsSync(join(XDG_CONFIG, "amp", "config.json")) ||
 			existsSync(join(XDG_CONFIG, "amp", "settings.json")) ||
-			cliExists("amp"),
+			cliExists("amp")),
 	},
 	{
 		id: "opencode",
@@ -219,11 +233,11 @@ export const TOOL_CONFIGS: ToolConfig[] = [
 			},
 		],
 		agentPaths: [],
-		isInstalled: () =>
+		isInstalled: () => cached("opencode", () =>
 			appExists("OpenCode") ||
 			existsSync(join(XDG_CONFIG, "opencode", "opencode.json")) ||
 			existsSync(join(XDG_CONFIG, "opencode", "opencode.jsonc")) ||
-			cliExists("opencode"),
+			cliExists("opencode")),
 	},
 	{
 		id: "pi",
@@ -238,7 +252,7 @@ export const TOOL_CONFIGS: ToolConfig[] = [
 			},
 		],
 		agentPaths: [],
-		isInstalled: () => cliExists("pi"),
+		isInstalled: () => cached("pi", () => cliExists("pi")),
 	},
 	{
 		id: "antigravity",
@@ -253,10 +267,10 @@ export const TOOL_CONFIGS: ToolConfig[] = [
 			},
 		],
 		agentPaths: [],
-		isInstalled: () =>
+		isInstalled: () => cached("antigravity", () =>
 			appExists("Antigravity") ||
 			existsSync(join(HOME, ".gemini", "antigravity", "skills")) ||
-			cliExists("antigravity"),
+			cliExists("antigravity")),
 	},
 	{
 		id: "claude-desktop",
@@ -265,7 +279,7 @@ export const TOOL_CONFIGS: ToolConfig[] = [
 		icon: "monitor",
 		paths: [],
 		agentPaths: [],
-		isInstalled: () => appExists("Claude"),
+		isInstalled: () => cached("claude-desktop", () => appExists("Claude")),
 	},
 	{
 		id: "global-agents",
@@ -280,7 +294,7 @@ export const TOOL_CONFIGS: ToolConfig[] = [
 			},
 		],
 		agentPaths: [],
-		isInstalled: () => existsSync(join(HOME, ".agents", "skills")),
+		isInstalled: () => cached("global-agents", () => existsSync(join(HOME, ".agents", "skills"))),
 	},
 	{
 		id: "aider",
@@ -289,6 +303,6 @@ export const TOOL_CONFIGS: ToolConfig[] = [
 		icon: "wrench",
 		paths: [],
 		agentPaths: [],
-		isInstalled: () => cliExists("aider"),
+		isInstalled: () => cached("aider", () => cliExists("aider")),
 	},
 ];

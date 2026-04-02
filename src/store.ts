@@ -81,8 +81,19 @@ export class SkillStore extends Events {
 	refresh(settings: ChopsSettings): void {
 		this._projectsHomeDir = settings.projectsHomeDir;
 		this.items = scanAll(settings);
-		this.enrichWithSkillkit();
 		this.trigger("updated");
+		this.deferEnrichment();
+	}
+
+	private _enrichTimer: ReturnType<typeof setTimeout> | null = null;
+
+	private deferEnrichment(): void {
+		if (this._enrichTimer) clearTimeout(this._enrichTimer);
+		this._enrichTimer = setTimeout(() => {
+			this._enrichTimer = null;
+			this.enrichWithSkillkit();
+			this.trigger("updated");
+		}, 50);
 	}
 
 	private enrichWithSkillkit(): void {

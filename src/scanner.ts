@@ -9,7 +9,7 @@ import { join, basename, extname, relative, sep } from "path";
 import { homedir } from "os";
 import { parseYaml } from "obsidian";
 import { createHash } from "crypto";
-import { TOOL_CONFIGS } from "./tool-configs";
+import { TOOL_CONFIGS, clearInstallCache } from "./tool-configs";
 import type { SkillItem, SkillPath, SkillType, NamingMode, ScanPattern, ChopsSettings, ToolConfig } from "./types";
 
 const IGNORED_FILES = new Set([
@@ -283,6 +283,7 @@ export function getProjectName(filePath: string, projectsHomeDir: string): strin
 }
 
 export function scanAll(settings: ChopsSettings): Map<string, SkillItem> {
+	clearInstallCache();
 	const namingMode = settings.namingMode || "auto";
 	const items = new Map<string, SkillItem>();
 	const nameMap = new Map<string, string>();

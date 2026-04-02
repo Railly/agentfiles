@@ -34,10 +34,13 @@ export default class AgentfilesPlugin extends Plugin {
 
 		this.addSettingTab(new AgentfilesSettingTab(this.app, this));
 
-		this.refreshStore();
 		this.store.setDeepSearch(this.settings.deepSearchDefault ?? false);
 		this.store.setDeepSearchScope(this.settings.deepSearchScope ?? "both");
-		this.startWatcher();
+
+		setTimeout(() => {
+			this.refreshStore();
+			this.startWatcher();
+		}, 0);
 	}
 
 	private addVaultPath(): void {
