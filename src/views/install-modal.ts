@@ -150,6 +150,7 @@ export class InstallSkillModal extends Modal {
 		void installSkillAsync(this.skill.source, agents, {
 			runner: this.settings.packageRunner,
 			global: this.isGlobal,
+			skillName: this.skill.name,
 		}).then((result) => {
 			if (result.success) {
 				new Notice(`Installed ${this.skill.name}`, 5000);
