@@ -115,7 +115,7 @@ export class SkillStore extends Events {
 
 	revalidate(): void {
 		if (!isSkillkitAvailable()) return;
-		this.revalidateAsync();
+		void this.revalidateAsync();
 	}
 
 	private applyEnrichmentFromCache(): void {
