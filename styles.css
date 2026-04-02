@@ -1920,3 +1920,338 @@
 .as-filter-clear:hover {
 	text-decoration: underline;
 }
+
+/* Wrapper for swapping content inside grid cells */
+.as-wrapper {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	overflow-y: auto;
+	overflow-x: hidden;
+}
+
+/* ===== Conversation Explorer ===== */
+
+/* Date group headers */
+.as-conv-date-header {
+	font-size: var(--font-smallest);
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: var(--text-faint);
+	padding: 10px 12px 4px;
+}
+
+/* Conversation card overrides */
+.as-conv-card {
+	border-left: 3px solid var(--interactive-accent);
+}
+
+.as-conv-info {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-top: 4px;
+	font-size: var(--font-ui-smaller);
+	color: var(--text-muted);
+}
+
+.as-conv-project {
+	display: flex;
+	align-items: center;
+	gap: 3px;
+	color: var(--text-accent);
+	font-weight: 500;
+}
+
+.as-conv-project-icon {
+	display: flex;
+	align-items: center;
+}
+
+.as-conv-project-icon svg {
+	width: 12px;
+	height: 12px;
+}
+
+.as-conv-time {
+	color: var(--text-faint);
+}
+
+.as-conv-msgs {
+	color: var(--text-faint);
+}
+
+/* Tags */
+.as-conv-tags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 3px;
+	margin-top: 6px;
+}
+
+.as-conv-tag {
+	font-size: 10px;
+	padding: 1px 6px;
+	border-radius: 10px;
+	background: var(--background-secondary);
+	color: var(--text-muted);
+	border: 1px solid var(--background-modifier-border);
+}
+
+.as-conv-tag-custom {
+	background: color-mix(in srgb, var(--interactive-accent) 15%, transparent);
+	color: var(--interactive-accent);
+	border-color: color-mix(in srgb, var(--interactive-accent) 30%, transparent);
+}
+
+.as-conv-tag-more {
+	color: var(--text-faint);
+	font-style: italic;
+}
+
+.as-conv-tag-add {
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	padding: 1px 4px;
+}
+
+.as-conv-tag-add:hover {
+	background: var(--background-modifier-hover);
+}
+
+.as-conv-tag-add svg {
+	width: 10px;
+	height: 10px;
+}
+
+.as-conv-tag-remove {
+	cursor: pointer;
+	display: inline-flex;
+	align-items: center;
+	margin-left: 2px;
+	opacity: 0.6;
+}
+
+.as-conv-tag-remove:hover {
+	opacity: 1;
+}
+
+.as-conv-tag-remove svg {
+	width: 8px;
+	height: 8px;
+}
+
+.as-conv-tag-input {
+	font-size: 10px;
+	padding: 1px 6px;
+	border-radius: 10px;
+	border: 1px solid var(--interactive-accent);
+	background: var(--background-primary);
+	color: var(--text-normal);
+	outline: none;
+	width: 80px;
+}
+
+/* Detail tags bar */
+.as-conv-detail-tags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+	padding: 6px 16px;
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+
+/* Selection bar */
+.as-conv-selection-bar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 8px 16px;
+	background: color-mix(in srgb, var(--interactive-accent) 10%, transparent);
+	border-bottom: 1px solid color-mix(in srgb, var(--interactive-accent) 30%, transparent);
+	border-radius: var(--radius-s);
+	margin: 8px 16px;
+	font-size: var(--font-ui-smaller);
+	color: var(--interactive-accent);
+	font-weight: 500;
+}
+
+.as-conv-save-selected-btn {
+	padding: 4px 12px;
+	border-radius: var(--radius-s);
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+	border: none;
+	cursor: pointer;
+	font-size: var(--font-ui-smaller);
+	font-weight: 500;
+}
+
+.as-conv-save-selected-btn:hover {
+	opacity: 0.9;
+}
+
+/* Messages */
+.as-conv-msg {
+	padding: 10px 20px;
+	border-bottom: 1px solid var(--background-modifier-border);
+	transition: background 0.15s;
+}
+
+.as-conv-msg:hover {
+	background: var(--background-secondary-alt);
+}
+
+.as-conv-msg-selected {
+	background: color-mix(in srgb, var(--interactive-accent) 8%, transparent) !important;
+	border-left: 3px solid var(--interactive-accent);
+	padding-left: 17px;
+}
+
+.as-conv-msg-human {
+	/* subtle differentiation */
+}
+
+.as-conv-msg-assistant {
+	background: var(--background-secondary);
+}
+
+.as-conv-msg-header {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	margin-bottom: 6px;
+}
+
+.as-conv-msg-role-icon {
+	display: flex;
+	align-items: center;
+	color: var(--text-muted);
+}
+
+.as-conv-msg-role-icon svg {
+	width: 14px;
+	height: 14px;
+}
+
+.as-conv-msg-role {
+	font-size: var(--font-ui-smaller);
+	font-weight: 600;
+	color: var(--text-normal);
+}
+
+.as-conv-msg-time {
+	font-size: var(--font-smallest);
+	color: var(--text-faint);
+	margin-left: auto;
+}
+
+.as-conv-msg-select {
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	color: var(--text-faint);
+	margin-left: 4px;
+}
+
+.as-conv-msg-select:hover {
+	color: var(--interactive-accent);
+}
+
+.as-conv-msg-select svg {
+	width: 14px;
+	height: 14px;
+}
+
+.as-conv-msg-content {
+	font-size: var(--font-ui-small);
+	color: var(--text-normal);
+	line-height: 1.5;
+	overflow-x: auto;
+}
+
+.as-conv-msg-content p {
+	margin: 0 0 4px;
+}
+
+.as-conv-msg-content pre {
+	background: var(--code-background);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-s);
+	padding: 8px 12px;
+	overflow-x: auto;
+	font-size: var(--code-size);
+}
+
+/* Tool call badges */
+.as-conv-msg-tools {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 3px;
+	margin-top: 6px;
+}
+
+.as-conv-tool-badge {
+	font-size: 9px;
+	padding: 1px 5px;
+	border-radius: var(--radius-s);
+	background: var(--background-modifier-border);
+	color: var(--text-faint);
+	font-family: var(--font-monospace);
+}
+
+/* Show more */
+.as-conv-show-more {
+	padding: 12px 20px;
+	text-align: center;
+}
+
+.as-conv-show-more-btn {
+	padding: 6px 16px;
+	border-radius: var(--radius-s);
+	border: 1px solid var(--background-modifier-border);
+	background: none;
+	color: var(--text-muted);
+	cursor: pointer;
+	font-size: var(--font-ui-smaller);
+}
+
+.as-conv-show-more-btn:hover {
+	background: var(--background-modifier-hover);
+	color: var(--text-normal);
+}
+
+/* Resume section */
+.as-conv-resume-section {
+	padding: 12px 20px;
+	border-top: 1px solid var(--background-modifier-border);
+	margin-top: 8px;
+}
+
+.as-conv-resume-cmd {
+	display: block;
+	margin-top: 6px;
+	padding: 8px 12px;
+	background: var(--code-background);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-s);
+	font-family: var(--font-monospace);
+	font-size: var(--code-size);
+	color: var(--text-normal);
+	cursor: pointer;
+}
+
+.as-conv-resume-cmd:hover {
+	background: var(--background-modifier-hover);
+}
+
+/* Primary toolbar button */
+.as-toolbar-btn-primary {
+	color: var(--interactive-accent) !important;
+}
+
+.as-toolbar-btn-primary:hover {
+	background: color-mix(in srgb, var(--interactive-accent) 15%, transparent);
+}
