@@ -48,8 +48,16 @@ function extractName(
 	frontmatter: Record<string, unknown>,
 	content: string,
 	filePath: string,
-	namingMode: NamingMode = "auto"
+	namingMode: NamingMode = "auto",
+	type: SkillType = "skill"
 ): string {
+	if (type === "command") {
+		if (typeof frontmatter.name === "string" && frontmatter.name) {
+			return frontmatter.name;
+		}
+		const name = basename(filePath, extname(filePath));
+		return name;
+	}
 	if (namingMode === "auto") {
 		if (typeof frontmatter.name === "string" && frontmatter.name) {
 			return frontmatter.name;
@@ -161,7 +169,7 @@ function parseSkillFile(
 		const raw = readFileSync(filePath, "utf-8");
 		const stat = statSync(filePath);
 		const { frontmatter, content } = parseFrontmatter(raw);
-		const name = extractName(frontmatter, content, filePath, namingMode);
+		const name = extractName(frontmatter, content, filePath, namingMode, type);
 		const description =
 			typeof frontmatter.description === "string"
 				? frontmatter.description
