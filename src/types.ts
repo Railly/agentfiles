@@ -66,6 +66,8 @@ export type SidebarFilter =
 	| { kind: "collection"; name: string }
 	| { kind: "project"; project: string };
 
+export type NamingMode = "auto" | "filename";
+
 export interface ChopsSettings {
 	tools: Record<string, { enabled: boolean; customPaths: string[] }>;
 	watchEnabled: boolean;
@@ -73,6 +75,7 @@ export interface ChopsSettings {
 	favorites: string[];
 	collections: Record<string, string[]>;
 	customScanPaths: string[];
+	namingMode: NamingMode;
 	projectScanEnabled: boolean;
 	projectsHomeDir: string;
 	packageRunner: "auto" | "npx" | "bunx";
@@ -85,6 +88,7 @@ export const DEFAULT_SETTINGS: ChopsSettings = {
 	favorites: [],
 	collections: {},
 	customScanPaths: [],
+	namingMode: "auto",
 	projectScanEnabled: true,
 	projectsHomeDir: "",
 	packageRunner: "auto",

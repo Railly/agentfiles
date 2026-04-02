@@ -42,6 +42,23 @@ export class AgentfilesSettingTab extends PluginSettingTab {
 					})
 			);
 
+		new Setting(containerEl)
+			.setName("Display names")
+			.setDesc("How skill and command names are displayed in the list")
+			.addDropdown((drop) =>
+				drop
+					.addOptions({
+						auto: "Auto (frontmatter / heading / filename)",
+						filename: "Filename only",
+					})
+					.setValue(this.plugin.settings.namingMode || "auto")
+					.onChange(async (value) => {
+						this.plugin.settings.namingMode = value as "auto" | "filename";
+						await this.plugin.saveSettings();
+						this.plugin.refreshStore();
+					})
+			);
+
 		new Setting(containerEl).setName("Marketplace").setHeading();
 
 		new Setting(containerEl)
