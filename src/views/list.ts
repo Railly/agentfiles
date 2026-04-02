@@ -1,4 +1,5 @@
-import { setIcon } from "obsidian";
+import { Menu, setIcon } from "obsidian";
+import { shell } from "electron";
 import { TOOL_CONFIGS } from "../tool-configs";
 import { TOOL_SVGS, renderToolIcon } from "../tool-icons";
 import type { SkillStore } from "../store";
@@ -256,6 +257,22 @@ export class ListPanel {
 		card.addEventListener("click", () => {
 			this.selectedId = item.id;
 			this.onSelect(item);
+		});
+
+		card.addEventListener("contextmenu", (e) => {
+			e.preventDefault();
+			const menu = new Menu();
+			menu.addItem((i) =>
+				i.setTitle("Reveal in system explorer")
+					.setIcon("folder-open")
+					.onClick(() => shell.showItemInFolder(item.filePath))
+			);
+			menu.addItem((i) =>
+				i.setTitle("Copy file path")
+					.setIcon("copy")
+					.onClick(() => navigator.clipboard.writeText(item.filePath))
+			);
+			menu.showAtMouseEvent(e);
 		});
 	}
 }
