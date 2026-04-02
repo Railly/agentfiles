@@ -1,10 +1,11 @@
 import { execSync, exec } from "child_process";
 import { existsSync, readFileSync, readdirSync, rmSync, writeFileSync } from "fs";
-import { join } from "path";
-import { homedir } from "os";
+import { join, delimiter } from "path";
+import { homedir, platform } from "os";
 import { requestUrl } from "obsidian";
 
 const HOME = homedir();
+const IS_WIN = platform() === "win32";
 const LOCK_PATH = join(HOME, ".agents", ".skill-lock.json");
 const API_BASE = "https://skills.sh/api";
 
@@ -122,26 +123,47 @@ export async function getPopularSkills(): Promise<MarketplaceSkill[]> {
 }
 
 function buildPath(): string {
-	const extra = [
-		"/usr/local/bin",
-		"/opt/homebrew/bin",
-		join(HOME, ".local", "bin"),
-		join(HOME, ".bun", "bin"),
-	];
-	const nvmDir = join(HOME, ".nvm", "versions", "node");
+	const extra: string[] = [];
+	if (IS_WIN) {
+		const appData = process.env.APPDATA || join(HOME, "AppData", "Roaming");
+		extra.push(
+			join(appData, "npm"),
+			join(HOME, ".bun", "bin"),
+			join(HOME, "AppData", "Local", "npm"),
+		);
+	} else {
+		extra.push(
+			"/usr/local/bin",
+			"/opt/homebrew/bin",
+			join(HOME, ".local", "bin"),
+			join(HOME, ".bun", "bin"),
+		);
+	}
+	const nvmDir = IS_WIN
+		? join(HOME, "AppData", "Roaming", "nvm")
+		: join(HOME, ".nvm", "versions", "node");
 	try {
 		for (const d of readdirSync(nvmDir)) {
-			extra.push(join(nvmDir, d, "bin"));
+			extra.push(IS_WIN ? join(nvmDir, d) : join(nvmDir, d, "bin"));
 		}
 	} catch { /* empty */ }
-	return [...extra, process.env.PATH || ""].join(":");
+	return [...extra, process.env.PATH || ""].join(delimiter);
 }
 
 function detectRunner(): string {
-	const bunPath = join(HOME, ".bun", "bin", "bunx");
-	if (existsSync(bunPath)) return bunPath;
-	if (existsSync("/usr/local/bin/bunx")) return "bunx";
-	if (existsSync("/opt/homebrew/bin/bunx")) return "bunx";
+	const names = IS_WIN ? ["bunx.cmd", "bunx.exe", "bunx"] : ["bunx"];
+	const dirs: string[] = [];
+	if (IS_WIN) {
+		const appData = process.env.APPDATA || join(HOME, "AppData", "Roaming");
+		dirs.push(join(HOME, ".bun", "bin"), join(appData, "npm"));
+	} else {
+		dirs.push(join(HOME, ".bun", "bin"), "/usr/local/bin", "/opt/homebrew/bin");
+	}
+	for (const dir of dirs) {
+		for (const name of names) {
+			if (existsSync(join(dir, name))) return join(dir, name);
+		}
+	}
 	return "npx";
 }
 
@@ -201,6 +223,7 @@ export function installSkill(
 			timeout: 120000,
 			env: { ...process.env, PATH: buildPath(), NO_COLOR: "1" },
 			stdio: ["pipe", "pipe", "ignore"],
+			shell: IS_WIN,
 		}).trim();
 		return { success: true, output: out };
 	} catch (e: unknown) {
@@ -274,6 +297,7 @@ export function removeSkill(skillName: string, runner: "auto" | "npx" | "bunx" =
 			timeout: 30000,
 			env: { ...process.env, PATH: buildPath(), NO_COLOR: "1" },
 			stdio: ["pipe", "pipe", "ignore"],
+			shell: IS_WIN,
 		}).trim();
 		cliSuccess = true;
 	} catch (e: unknown) {
@@ -302,6 +326,7 @@ export function updateAllSkills(runner: "auto" | "npx" | "bunx" = "auto"): { suc
 			timeout: 120000,
 			env: { ...process.env, PATH: buildPath(), NO_COLOR: "1" },
 			stdio: ["pipe", "pipe", "ignore"],
+			shell: IS_WIN,
 		}).trim();
 		const match = out.match(/Updated (\d+) skill/);
 		const count = match ? parseInt(match[1]) : 0;
@@ -332,6 +357,7 @@ function execAsync(cmd: string, timeout = 120000): Promise<{ success: boolean; o
 			encoding: "utf-8",
 			timeout,
 			env: { ...process.env, PATH: buildPath(), NO_COLOR: "1" },
+			shell: IS_WIN ? "cmd.exe" : undefined,
 		}, (error, stdout) => {
 			const out = String(stdout ?? "");
 			if (!error || out.includes("Done") || out.includes("Installed") || out.includes("Removed") || out.includes("Updated")) {

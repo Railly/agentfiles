@@ -1,4 +1,5 @@
 import { Events } from "obsidian";
+import { sep } from "path";
 import type { SkillItem, SidebarFilter, DeepSearchScope, ChopsSettings } from "./types";
 import { scanAll, getProjectName } from "./scanner";
 import { getSkillkitStatsWithDaily, getSkillConflicts, getSkillWarnings, isSkillkitAvailable } from "./skillkit";
@@ -96,7 +97,7 @@ export class SkillStore extends Events {
 		const longDescMap = new Map(warnings.longDesc.map((w) => [w.name, w.chars]));
 
 		for (const item of this.items.values()) {
-			const dirName = item.filePath.split("/").slice(-2, -1)[0];
+			const dirName = item.filePath.split(sep).slice(-2, -1)[0];
 			const baseName = item.name.toLowerCase().replace(/\s+/g, "-");
 
 			const match = stats.get(item.name) || stats.get(dirName) || stats.get(baseName);

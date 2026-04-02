@@ -5,7 +5,7 @@ import {
 	realpathSync,
 	statSync,
 } from "fs";
-import { join, basename, extname, relative } from "path";
+import { join, basename, extname, relative, sep } from "path";
 import { homedir } from "os";
 import { parseYaml } from "obsidian";
 import { createHash } from "crypto";
@@ -273,9 +273,9 @@ function scanProjectRoots(settings: ChopsSettings): { items: SkillItem[]; toolId
 
 export function getProjectName(filePath: string, projectsHomeDir: string): string {
 	const homeDir = projectsHomeDir || homedir();
-	if (!filePath.startsWith(homeDir + "/")) return "global";
+	if (!filePath.startsWith(homeDir + sep)) return "global";
 	const rest = filePath.slice(homeDir.length + 1);
-	const parts = rest.split("/");
+	const parts = rest.split(sep);
 	if (parts.length > 1 && !parts[0].startsWith(".")) {
 		return parts[0];
 	}
