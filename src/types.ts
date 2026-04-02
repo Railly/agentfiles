@@ -85,6 +85,47 @@ export interface ChopsSettings {
 	packageRunner: "auto" | "npx" | "bunx";
 }
 
+// Conversation Explorer types
+export interface ConversationMessage {
+	role: "human" | "assistant";
+	text: string;
+	timestamp: string;
+	toolCalls?: string[];
+}
+
+export interface ConversationItem {
+	id: string;
+	uuid: string;
+	project: string;
+	projectPath: string;
+	title: string;
+	firstMessage: string;
+	messages: ConversationMessage[];
+	messageCount: number;
+	firstTimestamp: string;
+	lastTimestamp: string;
+	tags: string[];
+	customTags: string[];
+	isFavorite: boolean;
+	filePath: string;
+}
+
+export type ConversationFilter =
+	| { kind: "all-conversations" }
+	| { kind: "conversation-project"; project: string }
+	| { kind: "conversation-tag"; tag: string }
+	| { kind: "conversation-favorites" };
+
+export interface ConversationTagData {
+	customTags: Record<string, string[]>;
+	favorites: string[];
+}
+
+export const DEFAULT_CONVERSATION_TAG_DATA: ConversationTagData = {
+	customTags: {},
+	favorites: [],
+};
+
 export const DEFAULT_SETTINGS: ChopsSettings = {
 	tools: {},
 	watchEnabled: true,
