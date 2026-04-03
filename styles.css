@@ -1920,3 +1920,21 @@
 .as-filter-clear:hover {
 	text-decoration: underline;
 }
+
+/* Create skill */
+.as-sidebar-create {
+	border-top: 1px solid var(--background-modifier-border);
+	margin-top: 4px;
+	padding-top: 8px !important;
+}
+
+.as-create-modal h3 {
+	margin: 0 0 12px;
+}
+
+.as-create-buttons {
+	display: flex;
+	justify-content: flex-end;
+	gap: 8px;
+	margin-top: 16px;
+}

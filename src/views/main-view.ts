@@ -6,6 +6,7 @@ import { ListPanel } from "./list";
 import { DetailPanel } from "./detail";
 import { DashboardPanel } from "./dashboard";
 import { MarketplacePanel } from "./marketplace-view";
+import { CreateSkillModal } from "./create-skill-modal";
 
 export const VIEW_TYPE = "agentfiles-view";
 
@@ -74,7 +75,8 @@ export class AgentfilesView extends ItemView {
 			this.sidebarEl,
 			this.store,
 			() => this.toggleDashboard(),
-			() => this.toggleMarketplace()
+			() => this.toggleMarketplace(),
+			() => this.openCreateModal()
 		);
 		this.listPanel = new ListPanel(this.listEl, this.store, (item: SkillItem) =>
 			this.onSelectItem(item)
@@ -156,6 +158,16 @@ export class AgentfilesView extends ItemView {
 				this.detailPanel.clear();
 			}
 		}
+	}
+
+	private openCreateModal(): void {
+		new CreateSkillModal(this.app, (filePath: string) => {
+			this.store.refresh(this.settings);
+			setTimeout(() => {
+				const created = this.store.allItems.find((i) => i.filePath === filePath || i.realPath === filePath);
+				if (created) this.onSelectItem(created);
+			}, 100);
+		}).open();
 	}
 
 	private onSelectItem(item: SkillItem): void {

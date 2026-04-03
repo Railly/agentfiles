@@ -10,14 +10,16 @@ export class SidebarPanel {
 	private store: SkillStore;
 	private onToggleDashboard: () => void;
 	private onToggleMarketplace: () => void;
+	private onCreateSkill: () => void;
 	private dashboardActive = false;
 	private marketplaceActive = false;
 
-	constructor(containerEl: HTMLElement, store: SkillStore, onToggleDashboard: () => void, onToggleMarketplace: () => void) {
+	constructor(containerEl: HTMLElement, store: SkillStore, onToggleDashboard: () => void, onToggleMarketplace: () => void, onCreateSkill: () => void) {
 		this.containerEl = containerEl;
 		this.store = store;
 		this.onToggleDashboard = onToggleDashboard;
 		this.onToggleMarketplace = onToggleMarketplace;
+		this.onCreateSkill = onCreateSkill;
 	}
 
 	setDashboardActive(active: boolean): void {
@@ -229,6 +231,12 @@ export class SidebarPanel {
 			if (this.dashboardActive) this.onToggleDashboard();
 			if (!this.marketplaceActive) this.onToggleMarketplace();
 		});
+
+		const createRow = section.createDiv("as-sidebar-item as-sidebar-create");
+		const createIcon = createRow.createSpan("as-sidebar-icon");
+		setIcon(createIcon, "plus");
+		createRow.createSpan({ cls: "as-sidebar-label", text: "Create" });
+		createRow.addEventListener("click", () => this.onCreateSkill());
 	}
 
 	private renderSkillkitCta(): void {
