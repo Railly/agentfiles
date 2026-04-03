@@ -23,7 +23,7 @@ export class ConversationDetailPanel {
 	private vaultPath: string;
 	private currentItem: ConversationItem | null = null;
 	private selectedMessages: Set<number> = new Set();
-	private showAllMessages = false;
+	private visibleCount = 20;
 	private renderComponent = new Component();
 
 	constructor(
@@ -41,7 +41,7 @@ export class ConversationDetailPanel {
 	show(item: ConversationItem): void {
 		this.currentItem = item;
 		this.selectedMessages.clear();
-		this.showAllMessages = false;
+		this.visibleCount = 20;
 		this.render();
 	}
 
@@ -163,23 +163,32 @@ export class ConversationDetailPanel {
 			saveSelBtn.addEventListener("click", () => this.saveToVault(item));
 		}
 
-		// Messages
-		const maxInitial = 20;
-		const messagesToShow = this.showAllMessages
-			? item.messages
-			: item.messages.slice(0, maxInitial);
+		const PAGE_SIZE = 20;
+		const total = item.messages.length;
+		const messagesToShow = item.messages.slice(0, this.visibleCount);
 
 		for (let i = 0; i < messagesToShow.length; i++) {
 			this.renderMessage(body, messagesToShow[i], i);
 		}
 
-		if (!this.showAllMessages && item.messages.length > maxInitial) {
+		if (this.visibleCount < total) {
+			const remaining = total - this.visibleCount;
+			const nextBatch = Math.min(PAGE_SIZE, remaining);
 			const showMore = body.createDiv("as-conv-show-more");
+
 			showMore.createEl("button", {
-				text: `Show all ${item.messages.length} messages`,
+				text: `Show next ${nextBatch} messages`,
 				cls: "as-conv-show-more-btn",
 			}).addEventListener("click", () => {
-				this.showAllMessages = true;
+				this.visibleCount += PAGE_SIZE;
+				this.render();
+			});
+
+			showMore.createEl("button", {
+				text: `Show all ${total} messages`,
+				cls: "as-conv-show-all-btn",
+			}).addEventListener("click", () => {
+				this.visibleCount = total;
 				this.render();
 			});
 		}

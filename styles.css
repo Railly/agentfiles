@@ -2352,11 +2352,14 @@
 
 /* Show more */
 .as-conv-show-more {
+	display: flex;
+	gap: 8px;
+	justify-content: center;
 	padding: 12px 20px;
-	text-align: center;
 }
 
-.as-conv-show-more-btn {
+.as-conv-show-more-btn,
+.as-conv-show-all-btn {
 	padding: 6px 16px;
 	border-radius: var(--radius-s);
 	border: 1px solid var(--background-modifier-border);
@@ -2366,9 +2369,19 @@
 	font-size: var(--font-ui-smaller);
 }
 
-.as-conv-show-more-btn:hover {
+.as-conv-show-more-btn:hover,
+.as-conv-show-all-btn:hover {
 	background: var(--background-modifier-hover);
 	color: var(--text-normal);
+}
+
+.as-conv-show-more-btn {
+	flex: 1;
+}
+
+.as-conv-show-all-btn {
+	color: var(--text-faint);
+	font-size: var(--font-smallest);
 }
 
 /* Resume section */
