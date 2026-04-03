@@ -2091,44 +2091,7 @@
 }
 
 /* Conversation card overrides */
-.as-conv-card {
-	border-left: 3px solid var(--interactive-accent);
-}
-
-.as-conv-info {
-	display: flex;
-	align-items: center;
-	gap: 8px;
-	margin-top: 4px;
-	font-size: var(--font-ui-smaller);
-	color: var(--text-muted);
-}
-
-.as-conv-project {
-	display: flex;
-	align-items: center;
-	gap: 3px;
-	color: var(--text-accent);
-	font-weight: 500;
-}
-
-.as-conv-project-icon {
-	display: flex;
-	align-items: center;
-}
-
-.as-conv-project-icon svg {
-	width: 12px;
-	height: 12px;
-}
-
-.as-conv-time {
-	color: var(--text-faint);
-}
-
-.as-conv-msgs {
-	color: var(--text-faint);
-}
+/* Conversation info line is now rendered as as-skill-desc */
 
 /* Tags */
 .as-conv-tags {

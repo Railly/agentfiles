@@ -2,6 +2,14 @@ import { setIcon } from "obsidian";
 import type { ConversationStore } from "../conversations/store";
 import type { ConversationItem } from "../types";
 
+function sanitizeTitle(raw: string): string {
+	return raw
+		.replace(/<[^>]+>/g, "")
+		.replace(/\[Image #?\d*\]/gi, "")
+		.replace(/\s+/g, " ")
+		.trim() || "(untitled)";
+}
+
 function timeAgo(ts: string): string {
 	if (!ts) return "";
 	const diff = Date.now() - new Date(ts).getTime();
@@ -106,13 +114,14 @@ export class ConversationListPanel {
 	}
 
 	private renderCard(container: HTMLElement, item: ConversationItem): void {
-		const card = container.createDiv("as-skill-card as-conv-card");
+		const card = container.createDiv("as-skill-card");
 		if (item.uuid === this.selectedUuid) card.addClass("is-selected");
 
 		const header = card.createDiv("as-skill-header");
-		const titleText = item.title.length > 80
-			? item.title.slice(0, 80) + "..."
-			: item.title;
+		const cleanTitle = sanitizeTitle(item.title);
+		const titleText = cleanTitle.length > 60
+			? cleanTitle.slice(0, 60) + "..."
+			: cleanTitle;
 		header.createSpan({ cls: "as-skill-name", text: titleText });
 
 		if (item.isFavorite) {
@@ -120,30 +129,26 @@ export class ConversationListPanel {
 			setIcon(star, "star");
 		}
 
-		// Project + time
-		const info = card.createDiv("as-conv-info");
-		const projBadge = info.createSpan("as-conv-project");
-		setIcon(projBadge.createSpan("as-conv-project-icon"), "folder-git-2");
-		projBadge.createSpan({ text: item.project });
-		info.createSpan({ cls: "as-conv-time", text: timeAgo(item.lastTimestamp) });
-		info.createSpan({ cls: "as-conv-msgs", text: `${item.messageCount} msgs` });
+		const desc = [item.project, timeAgo(item.lastTimestamp), `${item.messageCount} msgs`]
+			.filter(Boolean).join(" · ");
+		card.createDiv({ cls: "as-skill-desc", text: desc });
 
-		// Tags
-		const allTags = [...item.tags, ...item.customTags];
-		if (allTags.length > 0) {
-			const tagsEl = card.createDiv("as-conv-tags");
-			const displayTags = allTags.slice(0, 6);
-			for (const tag of displayTags) {
+		const visibleTags = [...item.tags, ...item.customTags]
+			.filter((t) => t !== item.project);
+		if (visibleTags.length > 0) {
+			const meta = card.createDiv("as-skill-meta");
+			const MAX_TAGS = 3;
+			for (const tag of visibleTags.slice(0, MAX_TAGS)) {
 				const isCustom = item.customTags.includes(tag);
-				tagsEl.createSpan({
+				meta.createSpan({
 					cls: `as-conv-tag ${isCustom ? "as-conv-tag-custom" : ""}`,
 					text: tag,
 				});
 			}
-			if (allTags.length > 6) {
-				tagsEl.createSpan({
+			if (visibleTags.length > MAX_TAGS) {
+				meta.createSpan({
 					cls: "as-conv-tag as-conv-tag-more",
-					text: `+${allTags.length - 6}`,
+					text: `+${visibleTags.length - MAX_TAGS}`,
 				});
 			}
 		}
