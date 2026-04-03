@@ -2091,7 +2091,16 @@
 }
 
 /* Conversation card overrides */
-/* Conversation info line is now rendered as as-skill-desc */
+.as-conv-list .as-skill-card {
+	padding: 10px 12px;
+	margin-bottom: 0;
+	border-bottom: 1px solid var(--background-modifier-border);
+	border-radius: 0;
+}
+
+.as-conv-list .as-skill-card:last-child {
+	border-bottom: none;
+}
 
 /* Tags */
 .as-conv-tags {

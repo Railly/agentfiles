@@ -69,7 +69,7 @@ export class ConversationListPanel {
 				this.store.setSearch(this.inputEl!.value);
 			});
 
-			this.listEl = this.containerEl.createDiv("as-list-items");
+			this.listEl = this.containerEl.createDiv("as-list-items as-conv-list");
 		}
 
 		this.inputEl.value = this.store.searchQuery;
