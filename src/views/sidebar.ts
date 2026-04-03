@@ -241,15 +241,15 @@ export class SidebarPanel {
 			text: "Install skillkit to see usage stats, stale badges, and heavy skill warnings.",
 		});
 		const cmd = cta.createDiv("as-skillkit-cmd");
-		cmd.createEl("code", { text: "npm i -g skillkit" });
+		cmd.createEl("code", { text: "npm i -g @crafter/skillkit" });
 		const link = cta.createEl("a", {
 			cls: "as-skillkit-link",
 			text: "Learn more",
-			href: "https://www.npmjs.com/package/skillkit",
+			href: "https://www.npmjs.com/package/@crafter/skillkit",
 		});
 		link.addEventListener("click", (e) => {
 			e.preventDefault();
-			void shell.openExternal("https://www.npmjs.com/package/skillkit");
+			void shell.openExternal("https://www.npmjs.com/package/@crafter/skillkit");
 		});
 	}
 

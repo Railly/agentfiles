@@ -1,7 +1,7 @@
 {
 	"id": "agentfiles",
 	"name": "Agentfiles",
-	"version": "0.4.2",
+	"version": "0.4.3",
 	"minAppVersion": "1.4.11",
 	"description": "Discover, organize, and edit AI agent skills, commands, and agents across Claude Code, Cursor, Codex, Windsurf, and more.",
 	"author": "Railly Hugo",
