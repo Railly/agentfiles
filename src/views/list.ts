@@ -15,7 +15,7 @@ export class ListPanel {
 	private listEl: HTMLElement | null = null;
 	private typeFilter: string | null = null;
 	private sortBy: "name" | "usage" = "name";
-	private dropdownEl: HTMLElement | null = null;
+	private menuBtnEl: HTMLElement | null = null;
 
 	constructor(
 		containerEl: HTMLElement,
@@ -47,29 +47,18 @@ export class ListPanel {
 			});
 
 			this.deepToggleEl = searchContainer.createDiv("as-deep-toggle");
-			setIcon(this.deepToggleEl, "search-code");
-			this.deepToggleEl.setAttribute("aria-label", "Toggle deep search");
+			setIcon(this.deepToggleEl, "file-search");
+			this.deepToggleEl.setAttribute("aria-label", "Search file content");
 			this.deepToggleEl.addEventListener("click", () => {
 				this.store.setDeepSearch(!this.store.deepSearch);
 				this.updateDeepToggle();
 			});
 
-			const filterBtn = searchContainer.createDiv("as-filter-btn");
-			setIcon(filterBtn, "filter");
-			filterBtn.setAttribute("aria-label", "Filter by status");
-			filterBtn.addEventListener("click", (e) => {
-				e.stopPropagation();
-				this.toggleDropdown(filterBtn);
-			});
-
-			const sortBtn = searchContainer.createDiv("as-filter-btn");
-			setIcon(sortBtn, this.sortBy === "usage" ? "arrow-down-wide-narrow" : "arrow-down-a-z");
-			sortBtn.setAttribute("aria-label", this.sortBy === "usage" ? "Sorted by usage" : "Sorted by name");
-			sortBtn.addEventListener("click", () => {
-				this.sortBy = this.sortBy === "name" ? "usage" : "name";
-				setIcon(sortBtn, this.sortBy === "usage" ? "arrow-down-wide-narrow" : "arrow-down-a-z");
-				sortBtn.setAttribute("aria-label", this.sortBy === "usage" ? "Sorted by usage" : "Sorted by name");
-				this.renderList();
+			this.menuBtnEl = searchContainer.createDiv("as-list-menu-btn");
+			setIcon(this.menuBtnEl, "sliders-horizontal");
+			this.menuBtnEl.setAttribute("aria-label", "Filter & sort");
+			this.menuBtnEl.addEventListener("click", (e) => {
+				this.showMenu(e);
 			});
 
 			this.listEl = this.containerEl.createDiv("as-list-items");
@@ -77,6 +66,7 @@ export class ListPanel {
 
 		this.inputEl.value = this.store.searchQuery;
 		this.updateDeepToggle();
+		this.updateMenuBtn();
 		this.renderList();
 	}
 
@@ -86,57 +76,67 @@ export class ListPanel {
 		this.deepToggleEl.setAttribute(
 			"aria-label",
 			this.store.deepSearch
-				? "Deep search enabled — click to search names only"
-				: "Deep search disabled — click to search file content"
+				? "Deep search ON — searching file content"
+				: "Deep search OFF — searching names only"
 		);
 	}
 
-	private toggleDropdown(anchor: HTMLElement): void {
-		if (this.dropdownEl) {
-			this.dropdownEl.remove();
-			this.dropdownEl = null;
-			return;
-		}
+	private updateMenuBtn(): void {
+		if (!this.menuBtnEl) return;
+		const hasFilter = this.typeFilter !== null;
+		const hasSort = this.sortBy !== "name";
+		this.menuBtnEl.toggleClass("is-active", hasFilter || hasSort);
+	}
 
-		this.dropdownEl = anchor.createDiv("as-filter-dropdown");
+	private showMenu(e: Event): void {
+		const menu = new Menu();
 
-		const filters: { id: string; label: string; cls: string }[] = [
-			{ id: "all", label: "All", cls: "" },
-			{ id: "stale", label: "Stale", cls: "as-badge-stale" },
-			{ id: "heavy", label: "Heavy", cls: "as-badge-heavy" },
-			{ id: "oversized", label: "Oversized", cls: "as-badge-warn" },
-			{ id: "conflict", label: "Conflict", cls: "as-badge-conflict" },
+		menu.addItem((i) =>
+			i.setTitle("Sort by name")
+				.setIcon("arrow-up-az")
+				.setChecked(this.sortBy === "name")
+				.onClick(() => {
+					this.sortBy = "name";
+					this.updateMenuBtn();
+					this.renderList();
+				})
+		);
+		menu.addItem((i) =>
+			i.setTitle("Sort by usage")
+				.setIcon("trending-up")
+				.setChecked(this.sortBy === "usage")
+				.onClick(() => {
+					this.sortBy = "usage";
+					this.updateMenuBtn();
+					this.renderList();
+				})
+		);
+
+		menu.addSeparator();
+
+		const filters: { id: string; label: string }[] = [
+			{ id: "all", label: "Show all" },
+			{ id: "stale", label: "Stale only" },
+			{ id: "heavy", label: "Heavy only" },
+			{ id: "oversized", label: "Oversized only" },
+			{ id: "conflict", label: "Conflicts only" },
 		];
 
 		for (const f of filters) {
-			const item = this.dropdownEl.createDiv("as-filter-option");
-			if ((f.id === "all" && !this.typeFilter) || f.id === this.typeFilter) {
-				item.addClass("is-active");
-			}
-			if (f.cls) {
-				item.createSpan({ cls: f.cls, text: f.label });
-			} else {
-				item.setText(f.label);
-			}
-			item.addEventListener("click", (e) => {
-				e.stopPropagation();
-				this.typeFilter = f.id === "all" ? null : f.id;
-				if (this.dropdownEl) {
-					this.dropdownEl.remove();
-					this.dropdownEl = null;
-				}
-				this.renderList();
-			});
+			menu.addItem((i) =>
+				i.setTitle(f.label)
+					.setChecked(f.id === "all" ? !this.typeFilter : this.typeFilter === f.id)
+					.onClick(() => {
+						this.typeFilter = f.id === "all" ? null : f.id;
+						this.updateMenuBtn();
+						this.renderList();
+					})
+			);
 		}
 
-		const closeHandler = () => {
-			if (this.dropdownEl) {
-				this.dropdownEl.remove();
-				this.dropdownEl = null;
-			}
-			document.removeEventListener("click", closeHandler);
-		};
-		setTimeout(() => document.addEventListener("click", closeHandler), 0);
+		if (e instanceof MouseEvent) {
+			menu.showAtMouseEvent(e);
+		}
 	}
 
 	private renderList(): void {
@@ -172,6 +172,7 @@ export class ListPanel {
 			const clearBtn = filterLabel.createSpan({ cls: "as-filter-clear", text: "Clear" });
 			clearBtn.addEventListener("click", () => {
 				this.typeFilter = null;
+				this.updateMenuBtn();
 				this.renderList();
 			});
 		}
