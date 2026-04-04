@@ -11,11 +11,12 @@ export class ListPanel {
 	private onSelect: (item: SkillItem) => void;
 	private selectedId: string | null = null;
 	private inputEl: HTMLInputElement | null = null;
-	private deepToggleEl: HTMLElement | null = null;
 	private listEl: HTMLElement | null = null;
 	private typeFilter: string | null = null;
 	private sortBy: "name" | "usage" = "name";
-	private menuBtnEl: HTMLElement | null = null;
+	private openDropdown: "menu" | null = null;
+	private menuDropdownEl: HTMLElement | null = null;
+	private outsideClickCleanup: (() => void) | null = null;
 
 	constructor(
 		containerEl: HTMLElement,
@@ -46,96 +47,118 @@ export class ListPanel {
 				this.store.setSearch(this.inputEl!.value);
 			});
 
-			this.deepToggleEl = searchContainer.createDiv("as-deep-toggle");
-			setIcon(this.deepToggleEl, "file-search");
-			this.deepToggleEl.setAttribute("aria-label", "Search file content");
-			this.deepToggleEl.addEventListener("click", () => {
+			const actions = searchContainer.createDiv("as-conv-search-actions");
+
+			const deepBtn = actions.createEl("button", { cls: "as-conv-icon-btn" });
+			const deepIco = deepBtn.createSpan("as-conv-icon-btn-icon");
+			setIcon(deepIco, "file-search");
+			deepBtn.setAttribute("aria-label", "Search file content");
+			if (this.store.deepSearch) deepBtn.addClass("has-active");
+			deepBtn.addEventListener("click", () => {
 				this.store.setDeepSearch(!this.store.deepSearch);
-				this.updateDeepToggle();
+				deepBtn.toggleClass("has-active", this.store.deepSearch);
 			});
 
-			this.menuBtnEl = searchContainer.createDiv("as-list-menu-btn");
-			setIcon(this.menuBtnEl, "sliders-horizontal");
-			this.menuBtnEl.setAttribute("aria-label", "Filter & sort");
-			this.menuBtnEl.addEventListener("click", (e) => {
-				this.showMenu(e);
+			const menuWrapper = actions.createDiv("as-conv-dropdown-wrap");
+			const menuBtn = menuWrapper.createEl("button", { cls: "as-conv-icon-btn" });
+			const menuIco = menuBtn.createSpan("as-conv-icon-btn-icon");
+			setIcon(menuIco, "sliders-horizontal");
+			menuBtn.setAttribute("aria-label", "Filter & sort");
+			if (this.typeFilter || this.sortBy !== "name") menuBtn.addClass("has-active");
+
+			this.menuDropdownEl = menuWrapper.createDiv("as-conv-dropdown as-conv-dropdown-wide");
+			this.renderMenuDropdown();
+
+			menuBtn.addEventListener("click", (e) => {
+				e.stopPropagation();
+				if (this.openDropdown === "menu") {
+					this.closeDropdown();
+				} else {
+					this.closeDropdown();
+					this.openDropdown = "menu";
+					this.menuDropdownEl?.addClass("is-open");
+					const close = (ev: MouseEvent) => {
+						if (!menuWrapper.contains(ev.target as Node)) {
+							this.closeDropdown();
+						}
+					};
+					setTimeout(() => document.addEventListener("click", close), 0);
+					this.outsideClickCleanup = () => document.removeEventListener("click", close);
+				}
 			});
 
 			this.listEl = this.containerEl.createDiv("as-list-items");
 		}
 
 		this.inputEl.value = this.store.searchQuery;
-		this.updateDeepToggle();
-		this.updateMenuBtn();
 		this.renderList();
 	}
 
-	private updateDeepToggle(): void {
-		if (!this.deepToggleEl) return;
-		this.deepToggleEl.toggleClass("is-active", this.store.deepSearch);
-		this.deepToggleEl.setAttribute(
-			"aria-label",
-			this.store.deepSearch
-				? "Deep search ON — searching file content"
-				: "Deep search OFF — searching names only"
-		);
+	private closeDropdown(): void {
+		this.openDropdown = null;
+		this.menuDropdownEl?.removeClass("is-open");
+		if (this.outsideClickCleanup) {
+			this.outsideClickCleanup();
+			this.outsideClickCleanup = null;
+		}
 	}
 
-	private updateMenuBtn(): void {
-		if (!this.menuBtnEl) return;
-		const hasFilter = this.typeFilter !== null;
-		const hasSort = this.sortBy !== "name";
-		this.menuBtnEl.toggleClass("is-active", hasFilter || hasSort);
-	}
+	private renderMenuDropdown(): void {
+		if (!this.menuDropdownEl) return;
+		this.menuDropdownEl.empty();
 
-	private showMenu(e: Event): void {
-		const menu = new Menu();
+		const sortHeader = this.menuDropdownEl.createDiv("as-conv-dropdown-header");
+		sortHeader.setText("Sort");
 
-		menu.addItem((i) =>
-			i.setTitle("Sort by name")
-				.setIcon("arrow-up-az")
-				.setChecked(this.sortBy === "name")
-				.onClick(() => {
-					this.sortBy = "name";
-					this.updateMenuBtn();
-					this.renderList();
-				})
-		);
-		menu.addItem((i) =>
-			i.setTitle("Sort by usage")
-				.setIcon("trending-up")
-				.setChecked(this.sortBy === "usage")
-				.onClick(() => {
-					this.sortBy = "usage";
-					this.updateMenuBtn();
-					this.renderList();
-				})
-		);
-
-		menu.addSeparator();
-
-		const filters: { id: string; label: string }[] = [
-			{ id: "all", label: "Show all" },
-			{ id: "stale", label: "Stale only" },
-			{ id: "heavy", label: "Heavy only" },
-			{ id: "oversized", label: "Oversized only" },
-			{ id: "conflict", label: "Conflicts only" },
+		const sorts: { label: string; value: "name" | "usage"; icon: string }[] = [
+			{ label: "Name", value: "name", icon: "arrow-up-az" },
+			{ label: "Usage", value: "usage", icon: "trending-up" },
 		];
-
-		for (const f of filters) {
-			menu.addItem((i) =>
-				i.setTitle(f.label)
-					.setChecked(f.id === "all" ? !this.typeFilter : this.typeFilter === f.id)
-					.onClick(() => {
-						this.typeFilter = f.id === "all" ? null : f.id;
-						this.updateMenuBtn();
-						this.renderList();
-					})
-			);
+		for (const s of sorts) {
+			const item = this.menuDropdownEl.createDiv(`as-conv-dropdown-item ${this.sortBy === s.value ? "is-active" : ""}`);
+			const check = item.createSpan("as-conv-dropdown-check");
+			if (this.sortBy === s.value) setIcon(check, "check");
+			item.createSpan({ cls: "as-conv-dropdown-item-label", text: s.label });
+			item.addEventListener("click", (e) => {
+				e.stopPropagation();
+				this.sortBy = s.value;
+				this.updateMenuBtnState();
+				this.renderMenuDropdown();
+				this.renderList();
+			});
 		}
 
-		if (e instanceof MouseEvent) {
-			menu.showAtMouseEvent(e);
+		const filterHeader = this.menuDropdownEl.createDiv("as-conv-dropdown-header");
+		filterHeader.setText("Filter");
+
+		const filters: { id: string | null; label: string }[] = [
+			{ id: null, label: "All" },
+			{ id: "stale", label: "Stale" },
+			{ id: "heavy", label: "Heavy" },
+			{ id: "oversized", label: "Oversized" },
+			{ id: "conflict", label: "Conflicts" },
+		];
+		for (const f of filters) {
+			const isActive = this.typeFilter === f.id;
+			const item = this.menuDropdownEl.createDiv(`as-conv-dropdown-item ${isActive ? "is-active" : ""}`);
+			const check = item.createSpan("as-conv-dropdown-check");
+			if (isActive) setIcon(check, "check");
+			item.createSpan({ cls: "as-conv-dropdown-item-label", text: f.label });
+			item.addEventListener("click", (e) => {
+				e.stopPropagation();
+				this.typeFilter = f.id;
+				this.updateMenuBtnState();
+				this.renderMenuDropdown();
+				this.renderList();
+			});
+		}
+	}
+
+	private updateMenuBtnState(): void {
+		const menuBtn = this.containerEl.querySelector(".as-conv-dropdown-wrap .as-conv-icon-btn");
+		if (menuBtn) {
+			const isActive = this.typeFilter !== null || this.sortBy !== "name";
+			menuBtn.toggleClass("has-active", isActive);
 		}
 	}
 
