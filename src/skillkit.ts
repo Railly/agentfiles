@@ -3,6 +3,25 @@ import { existsSync, readdirSync } from "fs";
 import { join, delimiter } from "path";
 import { homedir, platform } from "os";
 
+const BUILTIN_TOOL_NAMES_PLUGIN = new Set([
+	"Read", "Write", "Edit", "MultiEdit", "Bash", "Glob", "Grep",
+	"WebSearch", "WebFetch", "TodoRead", "TodoWrite", "Task", "Agent",
+	"Skill", "LSP", "NotebookEdit", "AskFollowupQuestion",
+	"AttemptCompletion", "SearchReplace", "InsertCodeBlock",
+	"ReadImages", "ExecuteCommand", "ListFiles", "SearchFiles",
+	"ReadFile", "WriteFile", "ReplaceInFile", "ListCodeDefinitionNames",
+	"BrowserAction", "UseMcp", "shell", "shell_command",
+	"update_plan", "create_plan", "read_file", "write_file",
+	"execute_command", "spawn_agent", "write_stdin",
+	"multi_tool_use.parallel",
+]);
+
+function isRealSkillName(name: string): boolean {
+	if (BUILTIN_TOOL_NAMES_PLUGIN.has(name)) return false;
+	if (name.startsWith("mcp__") || name.startsWith("mcp_")) return false;
+	return true;
+}
+
 const HOME = homedir();
 const IS_WIN = platform() === "win32";
 const DB_PATH = join(HOME, ".skillkit", "analytics.db");
@@ -183,6 +202,7 @@ export function getSkillkitStats(): Map<string, SkillkitStats> {
 
 	const now = Date.now();
 	for (const skill of data.top_skills) {
+		if (!isRealSkillName(skill.name)) continue;
 		const lastDay = skill.daily.length > 0
 			? skill.daily[skill.daily.length - 1]?.date
 			: null;
@@ -220,6 +240,7 @@ export function getSkillkitStatsWithDaily(): Map<string, SkillkitStatsWithDaily>
 
 	const now = Date.now();
 	for (const skill of data.top_skills) {
+		if (!isRealSkillName(skill.name)) continue;
 		const lastDay = skill.daily.length > 0
 			? skill.daily[skill.daily.length - 1]?.date
 			: null;
@@ -304,6 +325,7 @@ export async function getSkillkitStatsWithDailyAsync(): Promise<Map<string, Skil
 
 	const now = Date.now();
 	for (const skill of data.top_skills) {
+		if (!isRealSkillName(skill.name)) continue;
 		const lastDay = skill.daily.length > 0
 			? skill.daily[skill.daily.length - 1]?.date
 			: null;

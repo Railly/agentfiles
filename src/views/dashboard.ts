@@ -4,6 +4,38 @@ import { isSkillkitAvailable, runSkillkitJson, runSkillkitAction } from "../skil
 import { updateAllSkillsAsync } from "../marketplace";
 import { showConfirmModal } from "./confirm-modal";
 
+const DASHBOARD_BUILTIN_TOOLS = new Set([
+	"Read", "Write", "Edit", "MultiEdit", "Bash", "Glob", "Grep",
+	"WebSearch", "WebFetch", "TodoRead", "TodoWrite", "Task", "Agent",
+	"Skill", "LSP", "NotebookEdit", "AskFollowupQuestion",
+	"AttemptCompletion", "SearchReplace", "InsertCodeBlock",
+	"ReadImages", "ExecuteCommand", "ListFiles", "SearchFiles",
+	"ReadFile", "WriteFile", "ReplaceInFile", "ListCodeDefinitionNames",
+	"BrowserAction", "UseMcp", "shell", "shell_command",
+	"update_plan", "create_plan", "read_file", "write_file",
+	"execute_command", "spawn_agent", "write_stdin",
+	"multi_tool_use.parallel",
+]);
+
+function isDashboardSkill(name: string): boolean {
+	if (DASHBOARD_BUILTIN_TOOLS.has(name)) return false;
+	if (name.startsWith("mcp__") || name.startsWith("mcp_")) return false;
+	return true;
+}
+
+function filterStatsSkills(stats: StatsJson): StatsJson {
+	const filtered = stats.top_skills.filter((s) => isDashboardSkill(s.name));
+	const removedTotal = stats.top_skills
+		.filter((s) => !isDashboardSkill(s.name))
+		.reduce((sum, s) => sum + s.total, 0);
+	return {
+		...stats,
+		top_skills: filtered,
+		total_invocations: Math.max(0, stats.total_invocations - removedTotal),
+		unique_skills: filtered.length,
+	};
+}
+
 interface StatsJson {
 	period: { days: number };
 	total_invocations: number;
@@ -127,8 +159,9 @@ export class DashboardPanel {
 
 	private renderDashboard(data: DashboardData): void {
 		this.renderActionBar(data);
-		if (data.stats) this.renderOverview(data.stats, data.health);
-		if (data.stats) this.renderTopSkills(data.stats);
+		const filteredStats = data.stats ? filterStatsSkills(data.stats) : null;
+		if (filteredStats) this.renderOverview(filteredStats, data.health);
+		if (filteredStats) this.renderTopSkills(filteredStats);
 		if (data.health || data.context) {
 			const row = this.containerEl.createDiv("as-dash-row");
 			if (data.health) this.renderHealth(data.health, row);
