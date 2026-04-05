@@ -42,6 +42,13 @@ function buildPath(): string {
 			"/opt/homebrew/bin",
 			join(HOME, ".local", "bin"),
 			join(HOME, ".bun", "bin"),
+			join(HOME, ".local", "share", "pnpm"),                              // pnpm global bin
+			join(HOME, ".volta", "bin"),                                          // Volta
+			join(HOME, ".yarn", "bin"),                                           // Yarn classic
+			join(HOME, ".config", "yarn", "global", "node_modules", ".bin"),      // Yarn modern
+			join(HOME, ".fnm", "aliases", "default", "bin"),                      // fnm
+			join(HOME, ".asdf", "shims"),                                         // asdf
+			join(HOME, ".proto", "bin"),                                          // proto
 		);
 	}
 	const nvmDir = IS_WIN
@@ -95,6 +102,13 @@ function findSkillkitBin(): string | null {
 			join(HOME, ".local", "bin"),
 			join(HOME, ".bun", "bin"),
 			join(HOME, ".local", "share", "mise", "shims"),
+			join(HOME, ".local", "share", "pnpm"),                              // pnpm global bin
+			join(HOME, ".volta", "bin"),                                          // Volta
+			join(HOME, ".yarn", "bin"),                                           // Yarn classic
+			join(HOME, ".config", "yarn", "global", "node_modules", ".bin"),      // Yarn modern
+			join(HOME, ".fnm", "aliases", "default", "bin"),                      // fnm
+			join(HOME, ".asdf", "shims"),                                         // asdf
+			join(HOME, ".proto", "bin"),                                          // proto
 		);
 	}
 	for (const dir of searchDirs) {
@@ -124,6 +138,32 @@ function findSkillkitBin(): string | null {
 					if (existsSync(p)) candidates.push(p);
 				}
 			} catch { /* empty */ }
+		}
+	}
+	// Dynamic fallback: only runs when static paths found no candidates,
+	// so the common case stays zero-cost (no child processes spawned).
+	// Each command queries a package manager for its global bin directory.
+	// Returns immediately once a valid crafter skillkit binary is found.
+	if (candidates.length === 0 && !IS_WIN) {
+		const dynamicCmds = [
+			["pnpm", "bin", "-g"],    // pnpm global bin directory
+			["yarn", "global", "bin"], // yarn global bin directory
+			["npm", "bin", "-g"],      // npm global bin directory
+		];
+		for (const args of dynamicCmds) {
+			try {
+				const dir = execSync(args.join(" "), {
+					encoding: "utf-8",
+					timeout: 5000,
+					stdio: ["pipe", "pipe", "pipe"],
+				}).trim();
+				if (dir) {
+					for (const bin of BIN_NAMES) {
+						const p = join(dir, bin);
+						if (existsSync(p) && isCrafterSkillkit(p)) return p;
+					}
+				}
+			} catch { /* command not available — skip to next */ }
 		}
 	}
 	for (const c of candidates) {
