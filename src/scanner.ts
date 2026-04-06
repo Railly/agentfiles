@@ -219,12 +219,12 @@ function scanPath(sp: SkillPath, toolId: string, namingMode: NamingMode = "auto"
 
 function scanProjectSkills(projectRoot: string, toolId: string): SkillItem[] {
 	const results: SkillItem[] = [];
-	const projectDirs = [
-		{ sub: ".claude/skills", type: "skill" as SkillType, pattern: "directory-with-skillmd" as ScanPattern },
-		{ sub: ".claude/commands", type: "command" as SkillType, pattern: "flat-md" as ScanPattern },
-		{ sub: ".claude/agents", type: "agent" as SkillType, pattern: "flat-md" as ScanPattern },
-		{ sub: ".cursor/skills", type: "skill" as SkillType, pattern: "directory-with-skillmd" as ScanPattern },
-		{ sub: ".codex/skills", type: "skill" as SkillType, pattern: "directory-with-skillmd" as ScanPattern },
+	const projectDirs: { sub: string; type: SkillType; pattern: ScanPattern }[] = [
+		{ sub: ".claude/skills", type: "skill", pattern: "directory-with-skillmd" },
+		{ sub: ".claude/commands", type: "command", pattern: "flat-md" },
+		{ sub: ".claude/agents", type: "agent", pattern: "flat-md" },
+		{ sub: ".cursor/skills", type: "skill", pattern: "directory-with-skillmd" },
+		{ sub: ".codex/skills", type: "skill", pattern: "directory-with-skillmd" },
 	];
 	for (const dir of projectDirs) {
 		const fullPath = join(projectRoot, dir.sub);

@@ -209,7 +209,7 @@ export class DetailPanel {
 			prop.createSpan({ cls: "as-fm-key", text: key });
 
 			const valStr =
-				(typeof value === "object" || Array.isArray(value)) ? JSON.stringify(value) : String(value as string | number | boolean);
+				(typeof value === "object" || Array.isArray(value)) ? JSON.stringify(value) : String(value);
 
 			if (valStr.length > 200) {
 				prop.createDiv({ cls: "as-fm-value-long", text: valStr });

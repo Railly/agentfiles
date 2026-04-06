@@ -3,7 +3,7 @@ import { shell } from "electron";
 import { TOOL_CONFIGS } from "../tool-configs";
 import { TOOL_SVGS, renderToolIcon } from "../tool-icons";
 import type { SkillStore } from "../store";
-import type { SidebarFilter } from "../types";
+import type { SidebarFilter, SkillType } from "../types";
 import type { ConversationStore } from "../conversations/store";
 
 export class SidebarPanel {
@@ -100,7 +100,7 @@ export class SidebarPanel {
 
 	private renderTypeSection(): void {
 		const typeCounts = this.store.getTypeCounts();
-		const types: { label: string; icon: string; type: string }[] = [
+		const types: { label: string; icon: string; type: SkillType }[] = [
 			{ label: "Skills", icon: "sparkles", type: "skill" },
 			{ label: "Commands", icon: "terminal", type: "command" },
 			{ label: "Agents", icon: "bot", type: "agent" },
@@ -112,7 +112,7 @@ export class SidebarPanel {
 			.map((t) => ({
 				label: t.label,
 				icon: t.icon,
-				filter: { kind: "type" as const, type: t.type as "skill" | "command" | "agent" | "rule" },
+				filter: { kind: "type" as const, type: t.type },
 				count: typeCounts.get(t.type) || 0,
 			}));
 
