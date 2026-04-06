@@ -1,6 +1,6 @@
 {
   "name": "agentfiles",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "AI Skills Manager for Obsidian",
   "main": "main.js",
   "scripts": {
