@@ -1,4 +1,5 @@
 import { Component, MarkdownRenderer, Notice, setIcon, type App } from "obsidian";
+import type { EditorView } from "@codemirror/view";
 import { writeFileSync } from "fs";
 import { shell } from "electron";
 import type { SkillItem, ChopsSettings } from "../types";
@@ -8,6 +9,7 @@ import { TOOL_SVGS, renderToolIcon } from "../tool-icons";
 import { formatLastUsed, getSkillTraces, runSkillkitAction, isSkillkitAvailable } from "../skillkit";
 import { renderSparkline } from "./sparkline";
 import { showConfirmModal } from "./confirm-modal";
+import { createSkillEditor } from "../editor/editor-factory";
 
 function estimateTokens(text: string): number {
 	return Math.ceil(text.length / 4);
@@ -42,6 +44,7 @@ export class DetailPanel {
 	private currentItem: SkillItem | null = null;
 	private isEditing = false;
 	private app: App;
+	private editorView: EditorView | null = null;
 
 	constructor(
 		containerEl: HTMLElement,
@@ -58,12 +61,14 @@ export class DetailPanel {
 	}
 
 	show(item: SkillItem): void {
+		this.destroyEditor();
 		this.currentItem = item;
 		this.isEditing = false;
 		this.render();
 	}
 
 	clear(): void {
+		this.destroyEditor();
 		this.currentItem = null;
 		this.containerEl.empty();
 		this.containerEl.addClass("as-detail");
@@ -327,29 +332,14 @@ export class DetailPanel {
 	}
 
 	private renderEditor(item: SkillItem): void {
+		this.destroyEditor();
 		const body = this.containerEl.createDiv("as-detail-body as-detail-body-editor");
+		const editorContainer = body.createDiv("as-editor-cm");
 
-		const textarea = body.createEl("textarea", {
-			cls: "as-editor-textarea",
-		});
-		textarea.value = item.content;
-		textarea.spellcheck = false;
-
-		textarea.addEventListener("keydown", (e: KeyboardEvent) => {
-			if ((e.metaKey || e.ctrlKey) && e.key === "s") {
-				e.preventDefault();
-				this.saveFile(item, textarea.value);
-			}
-			if (e.key === "Tab") {
-				e.preventDefault();
-				const start = textarea.selectionStart;
-				const end = textarea.selectionEnd;
-				textarea.value =
-					textarea.value.substring(0, start) +
-					"\t" +
-					textarea.value.substring(end);
-				textarea.selectionStart = textarea.selectionEnd = start + 1;
-			}
+		this.editorView = createSkillEditor({
+			doc: item.content,
+			parent: editorContainer,
+			onSave: (content) => this.saveFile(item, content),
 		});
 
 		const saveBar = body.createDiv("as-save-bar");
@@ -358,9 +348,18 @@ export class DetailPanel {
 			text: "Save",
 		});
 		saveBtn.addEventListener("click", () => {
-			this.saveFile(item, textarea.value);
+			if (this.editorView) {
+				this.saveFile(item, this.editorView.state.doc.toString());
+			}
 		});
 		saveBar.createSpan({ cls: "as-save-hint", text: "Cmd+S to save" });
+	}
+
+	private destroyEditor(): void {
+		if (this.editorView) {
+			this.editorView.destroy();
+			this.editorView = null;
+		}
 	}
 
 	private saveFile(item: SkillItem, content: string): void {

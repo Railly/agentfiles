@@ -494,20 +494,18 @@
 	flex-direction: column;
 }
 
-.as-editor-textarea {
+.as-editor-cm {
 	flex: 1;
-	width: 100%;
-	padding: 12px 20px;
-	background: var(--background-primary);
-	color: var(--text-normal);
-	border: none;
-	resize: none;
-	font-family: var(--font-monospace);
-	font-size: var(--font-ui-small);
-	line-height: 1.6;
-	outline: none;
-	tab-size: 2;
 	min-height: 0;
+	overflow: hidden;
+}
+
+.as-editor-cm .cm-editor {
+	height: 100%;
+}
+
+.as-editor-cm .cm-editor.cm-focused {
+	outline: none;
 }
 
 .as-save-bar {
