@@ -79,6 +79,13 @@ export function renderToolIcon(
 	svg.setAttribute("height", String(size));
 	svg.setAttribute("fill", "none");
 	svg.classList.add("as-tool-svg");
-	svg.innerHTML = svgData.paths;
+	const parser = new DOMParser();
+	const svgDoc = parser.parseFromString(
+		`<svg xmlns="http://www.w3.org/2000/svg">${svgData.paths}</svg>`,
+		"image/svg+xml",
+	);
+	for (const child of Array.from(svgDoc.documentElement.childNodes)) {
+		svg.appendChild(svg.ownerDocument.importNode(child, true));
+	}
 	container.appendChild(svg);
 }

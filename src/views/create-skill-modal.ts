@@ -1,9 +1,9 @@
-import { Modal, Notice, type App } from "obsidian";
+import { Modal, Notice, setIcon, type App } from "obsidian";
 import { existsSync, mkdirSync, writeFileSync } from "fs";
 import { join } from "path";
 import { TOOL_CONFIGS } from "../tool-configs";
 import { TOOL_SVGS, renderToolIcon } from "../tool-icons";
-import type { SkillType, ToolConfig, SkillPath } from "../types";
+import type { ToolConfig, SkillPath } from "../types";
 
 interface ToolOption {
 	tool: ToolConfig;
@@ -104,14 +104,7 @@ export class CreateSkillModal extends Modal {
 
 			const iconName = TYPE_ICONS[path.label] || "file";
 			const iconEl = card.createDiv("as-create-type-icon");
-			const svg = iconEl.createSvg("svg", { attr: { viewBox: "0 0 24 24", width: "20", height: "20", fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round", "stroke-linejoin": "round" } });
-			if (iconName === "sparkles") {
-				svg.innerHTML = '<path d="M12 3l1.5 5.5L19 10l-5.5 1.5L12 17l-1.5-5.5L5 10l5.5-1.5z"/>';
-			} else if (iconName === "terminal") {
-				svg.innerHTML = '<polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/>';
-			} else if (iconName === "bot") {
-				svg.innerHTML = '<rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><line x1="8" y1="16" x2="8" y2="16"/><line x1="16" y1="16" x2="16" y2="16"/>';
-			}
+			setIcon(iconEl, iconName);
 
 			card.createDiv({ cls: "as-create-type-label", text: path.label });
 
@@ -128,7 +121,7 @@ export class CreateSkillModal extends Modal {
 
 		const prevStep = this.selectedTool.paths.length > 1 ? "type" : "tool";
 		this.renderHeader(el, `New ${this.selectedPath.label}`, () => {
-			this.step = prevStep as "tool" | "type";
+			this.step = prevStep;
 			this.render();
 		});
 
@@ -168,7 +161,7 @@ export class CreateSkillModal extends Modal {
 		const header = el.createDiv("as-create-header");
 		if (onBack) {
 			const backBtn = header.createDiv("as-create-back");
-			backBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>';
+			setIcon(backBtn, "chevron-left");
 			backBtn.addEventListener("click", onBack);
 		}
 		header.createDiv({ cls: "as-create-title", text: title });
