@@ -9,13 +9,21 @@
     "lint": "eslint src/"
   },
   "devDependencies": {
+    "@codemirror/autocomplete": "^6.20.1",
+    "@codemirror/commands": "^6.10.3",
     "@codemirror/lang-markdown": "^6.5.0",
+    "@codemirror/language": "^6.12.3",
+    "@codemirror/lint": "^6.9.5",
+    "@codemirror/search": "^6.6.0",
+    "@codemirror/state": "^6.6.0",
+    "@codemirror/view": "^6.41.0",
+    "@lezer/highlight": "^1.2.3",
     "@types/node": "^22.0.0",
     "@typescript-eslint/eslint-plugin": "^8.57.2",
     "@typescript-eslint/parser": "^8.57.2",
     "esbuild": "^0.25.0",
     "eslint": "9",
-    "eslint-plugin-obsidian": "^2.29.0",
+    "eslint-plugin-obsidianmd": "^0.1.9",
     "obsidian": "latest",
     "typescript": "^5.7.0"
   }
