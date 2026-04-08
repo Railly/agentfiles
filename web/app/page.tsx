@@ -3,7 +3,8 @@ import { Footer } from "@/components/footer";
 import { Nav } from "@/components/nav";
 
 async function getStarCount(): Promise<number> {
-	const res = await fetch(
+	const doFetch = globalThis.fetch;
+	const res = await doFetch(
 		"https://api.github.com/repos/Railly/agentfiles",
 		{ next: { revalidate: 3600 } },
 	);
