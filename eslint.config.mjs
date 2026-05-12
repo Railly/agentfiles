@@ -3,6 +3,16 @@ import { defineConfig } from "eslint/config";
 import obsidianmd from "eslint-plugin-obsidianmd";
 
 export default defineConfig([
+	{
+		ignores: [
+			"main.js",
+			"node_modules/**",
+			"*.mjs",
+			"web/**",
+			"assets/**",
+			"scripts/**",
+		],
+	},
 	...obsidianmd.configs.recommended,
 	{
 		files: ["src/**/*.ts"],
@@ -42,8 +52,5 @@ export default defineConfig([
 			"@typescript-eslint/no-unsafe-return": "off",
 			"@typescript-eslint/no-base-to-string": "error",
 		},
-	},
-	{
-		ignores: ["main.js", "node_modules/**", "*.mjs", "web/**"],
 	},
 ]);

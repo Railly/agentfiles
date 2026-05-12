@@ -160,19 +160,29 @@ function InstallationSection() {
 				directory.
 			</p>
 			<p className="font-semibold text-[var(--foreground)]">
-				One-click from the community page
+				One-click via deep link
 			</p>
 			<p>
-				Open{" "}
+				Open this link in your browser:{" "}
+				<a
+					href="obsidian://show-plugin?id=agentfiles"
+					className="text-violet-400 hover:text-violet-300 transition-colors"
+				>
+					obsidian://show-plugin?id=agentfiles
+				</a>
+			</p>
+			<p>
+				It opens Obsidian directly on the install modal. Prefer to see the
+				scorecard first?{" "}
 				<a
 					href="https://community.obsidian.md/plugins/agentfiles"
 					target="_blank"
 					rel="noreferrer"
 					className="text-violet-400 hover:text-violet-300 transition-colors"
 				>
-					community.obsidian.md/plugins/agentfiles
-				</a>{" "}
-				and click <strong className="text-[var(--foreground)]">Add to Obsidian</strong>.
+					View on Obsidian Community
+				</a>
+				.
 			</p>
 			<p className="font-semibold text-[var(--foreground)]">
 				Inside Obsidian
@@ -209,15 +219,6 @@ function InstallationSection() {
 					</p>
 				</div>
 			</div>
-			<p>
-				Or use the deep link:{" "}
-				<a
-					href="obsidian://show-plugin?id=agentfiles"
-					className="text-violet-400 hover:text-violet-300 transition-colors"
-				>
-					obsidian://show-plugin?id=agentfiles
-				</a>
-			</p>
 			<p className="font-semibold text-[var(--foreground)]">Manual install</p>
 			<CodeBlock lang="bash">{`# Download latest release assets
 curl -L https://github.com/Railly/agentfiles/releases/latest/download/main.js \\

@@ -82,7 +82,7 @@ export class ListPanel {
 							this.closeDropdown();
 						}
 					};
-					activeWindow.setTimeout(() => activeDocument.addEventListener("click", close), 0);
+					window.setTimeout(() => activeDocument.addEventListener("click", close), 0);
 					this.outsideClickCleanup = () => activeDocument.removeEventListener("click", close);
 				}
 			});

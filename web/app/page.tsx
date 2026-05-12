@@ -92,7 +92,7 @@ function HeroSection() {
 				<div className="flex flex-col items-start gap-6 max-w-3xl">
 					<div className="flex items-center gap-2 px-3 py-1 rounded-full border border-[var(--border)] bg-[var(--card)] text-xs font-mono text-[var(--muted)]">
 						<span className="size-1.5 rounded-full bg-violet-400 shrink-0" />
-						v0.7.3 &mdash; Now on Obsidian Community
+						v0.7.4 &mdash; Now on Obsidian Community
 					</div>
 					<h1 className="text-4xl sm:text-6xl font-bold tracking-tight leading-[1.05]">
 						One plugin for all your
@@ -106,18 +106,24 @@ function HeroSection() {
 					</p>
 					<div className="flex items-center gap-3 flex-wrap pt-2">
 						<a
+							href="obsidian://show-plugin?id=agentfiles"
+							className="inline-flex items-center gap-2 px-5 py-2.5 rounded-md bg-[var(--accent)] text-white text-sm font-medium hover:bg-violet-400 transition-colors"
+						>
+							Open in Obsidian
+						</a>
+						<a
 							href="https://community.obsidian.md/plugins/agentfiles"
 							target="_blank"
 							rel="noreferrer"
-							className="inline-flex items-center gap-2 px-5 py-2.5 rounded-md bg-[var(--accent)] text-white text-sm font-medium hover:bg-violet-400 transition-colors"
+							className="inline-flex items-center gap-2 px-5 py-2.5 rounded-md border border-[var(--border)] bg-[var(--card)] text-sm font-medium text-[var(--muted)] hover:text-[var(--foreground)] hover:border-zinc-500 transition-colors"
 						>
-							Add to Obsidian
+							View on Obsidian Community
 						</a>
 						<a
 							href="https://github.com/Railly/agentfiles"
 							target="_blank"
 							rel="noreferrer"
-							className="inline-flex items-center gap-2 px-5 py-2.5 rounded-md border border-[var(--border)] bg-[var(--card)] text-sm font-medium text-[var(--muted)] hover:text-[var(--foreground)] hover:border-zinc-500 transition-colors"
+							className="inline-flex items-center gap-2 px-5 py-2.5 rounded-md text-sm font-medium text-[var(--muted)] hover:text-[var(--foreground)] transition-colors"
 						>
 							<StarIcon />
 							<StarCount /> stars
@@ -273,19 +279,19 @@ function CTASection() {
 				</div>
 				<div className="flex items-center gap-3 shrink-0">
 					<a
+						href="obsidian://show-plugin?id=agentfiles"
+						className="inline-flex items-center gap-2 px-5 py-2.5 rounded-md bg-[var(--accent)] text-white text-sm font-medium hover:bg-violet-400 transition-colors whitespace-nowrap"
+					>
+						Open in Obsidian
+					</a>
+					<a
 						href="https://community.obsidian.md/plugins/agentfiles"
 						target="_blank"
 						rel="noreferrer"
-						className="inline-flex items-center gap-2 px-5 py-2.5 rounded-md bg-[var(--accent)] text-white text-sm font-medium hover:bg-violet-400 transition-colors whitespace-nowrap"
-					>
-						Add to Obsidian
-					</a>
-					<Link
-						href="/docs"
 						className="inline-flex items-center gap-2 px-5 py-2.5 rounded-md border border-[var(--border)] bg-[var(--card)] text-sm font-medium text-[var(--muted)] hover:text-[var(--foreground)] transition-colors whitespace-nowrap"
 					>
-						View docs
-					</Link>
+						View on Community
+					</a>
 				</div>
 			</div>
 		</section>

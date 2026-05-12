@@ -22,8 +22,8 @@ export class SkillWatcher {
 	}
 
 	private scheduleUpdate(): void {
-		if (this.debounceTimer) activeWindow.clearTimeout(this.debounceTimer);
-		this.debounceTimer = activeWindow.setTimeout(() => {
+		if (this.debounceTimer) window.clearTimeout(this.debounceTimer);
+		this.debounceTimer = window.setTimeout(() => {
 			this.debounceTimer = null;
 			this.onChange();
 		}, this.debounceMs);
@@ -31,7 +31,7 @@ export class SkillWatcher {
 
 	close(): void {
 		if (this.debounceTimer) {
-			activeWindow.clearTimeout(this.debounceTimer);
+			window.clearTimeout(this.debounceTimer);
 			this.debounceTimer = null;
 		}
 		for (const w of this.watchers) {

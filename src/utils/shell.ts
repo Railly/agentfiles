@@ -9,7 +9,7 @@ interface ElectronModule {
 
 function getElectronShell(): ElectronShell | null {
 	try {
-		const req = (globalThis as { require?: (id: string) => unknown }).require;
+		const req = (window as unknown as { require?: (id: string) => unknown }).require;
 		if (typeof req !== "function") return null;
 		const mod = req("electron") as ElectronModule | undefined;
 		return mod?.shell ?? null;

@@ -232,10 +232,10 @@ export const TOOL_TO_AGENT: Record<string, string> = {
 export function installSkill(
 	source: string,
 	agents: string[],
-	options: { runner?: "auto" | "npx" | "bunx"; global?: boolean; skillName?: string } = {}
+	options: { runner?: "auto" | "npx" | "bunx"; globalInstall?: boolean; skillName?: string } = {}
 ): { success: boolean; output: string } {
 	const agentFlag = agents.length > 0 ? `-a ${agents.join(" ")}` : "-a '*'";
-	const globalFlag = options.global ? "-g" : "";
+	const globalFlag = options.globalInstall ? "-g" : "";
 	const skillFlag = options.skillName ? `-s ${options.skillName}` : "";
 	const resolvedRunner = getRunner(options.runner || "auto");
 	const cmd = `${resolvedRunner} skills add ${source} ${agentFlag} ${globalFlag} ${skillFlag} -y`.replace(/\s+/g, " ").trim();
@@ -398,10 +398,10 @@ function execAsync(cmd: string, timeout = 120000): Promise<{ success: boolean; o
 export async function installSkillAsync(
 	source: string,
 	agents: string[],
-	options: { runner?: "auto" | "npx" | "bunx"; global?: boolean; skillName?: string } = {}
+	options: { runner?: "auto" | "npx" | "bunx"; globalInstall?: boolean; skillName?: string } = {}
 ): Promise<{ success: boolean; output: string }> {
 	const agentFlag = agents.length > 0 ? `-a ${agents.join(" ")}` : "-a '*'";
-	const globalFlag = options.global ? "-g" : "";
+	const globalFlag = options.globalInstall ? "-g" : "";
 	const skillFlag = options.skillName ? `-s ${options.skillName}` : "";
 	const resolvedRunner = getRunner(options.runner || "auto");
 	const cmd = `${resolvedRunner} skills add ${source} ${agentFlag} ${globalFlag} ${skillFlag} -y`.replace(/\s+/g, " ").trim();

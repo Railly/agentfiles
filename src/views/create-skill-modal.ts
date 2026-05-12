@@ -146,7 +146,7 @@ export class CreateSkillModal extends Modal {
 		input.addEventListener("keydown", (e) => {
 			if (e.key === "Enter" && this.name) this.create();
 		});
-		activeWindow.setTimeout(() => input.focus(), 10);
+		window.setTimeout(() => input.focus(), 10);
 
 		const btnRow = el.createDiv("as-create-actions");
 		const createBtn = btnRow.createEl("button", {

@@ -19,7 +19,7 @@ let lastIsGlobal = true;
 
 interface InstallPrefs {
 	agents?: string[];
-	global?: boolean;
+	globalInstall?: boolean;
 }
 
 function loadPrefs(): void {
@@ -28,7 +28,7 @@ function loadPrefs(): void {
 	try {
 		const data = JSON.parse(readFileSync(PREFS_FILE, "utf-8")) as InstallPrefs;
 		lastSelectedAgents = new Set(data.agents || []);
-		lastIsGlobal = data.global ?? true;
+		lastIsGlobal = data.globalInstall ?? true;
 	} catch { /* empty */ }
 }
 
@@ -36,7 +36,7 @@ function savePrefs(): void {
 	try {
 		writeFileSync(PREFS_FILE, JSON.stringify({
 			agents: lastSelectedAgents ? [...lastSelectedAgents] : [],
-			global: lastIsGlobal,
+			globalInstall: lastIsGlobal,
 		}), "utf-8");
 	} catch { /* empty */ }
 }
@@ -154,7 +154,7 @@ export class InstallSkillModal extends Modal {
 
 		void installSkillAsync(this.skill.source, agents, {
 			runner: this.settings.packageRunner,
-			global: this.isGlobal,
+			globalInstall: this.isGlobal,
 			skillName: this.skill.name,
 		}).then((result) => {
 			if (result.success) {

@@ -3,9 +3,40 @@ import { Nav } from "@/components/nav";
 
 const releases = [
 	{
-		version: "0.7.3",
+		version: "0.7.4",
 		date: "2026-05-12",
 		tag: "latest",
+		changes: [
+			{
+				type: "feat",
+				text: "GitHub Actions release workflow with build provenance attestation",
+			},
+			{
+				type: "fix",
+				text: "Switch timer functions from activeWindow.setTimeout to window.setTimeout per Obsidian guidelines",
+			},
+			{
+				type: "fix",
+				text: "Replace globalThis with window.require in electron shell helper",
+			},
+			{
+				type: "fix",
+				text: "Rename options.global to options.globalInstall to avoid linter false positive",
+			},
+			{
+				type: "fix",
+				text: "Remove all !important rules and duplicate CSS selectors",
+			},
+			{
+				type: "chore",
+				text: "Exclude web/ landing source from plugin scan",
+			},
+		],
+	},
+	{
+		version: "0.7.3",
+		date: "2026-05-12",
+		tag: null,
 		changes: [
 			{
 				type: "feat",

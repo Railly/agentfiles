@@ -246,7 +246,7 @@ export class AgentfilesView extends ItemView {
 	private openCreateModal(): void {
 		new CreateSkillModal(this.app, (filePath: string) => {
 			this.store.refresh(this.settings);
-			activeWindow.setTimeout(() => {
+			window.setTimeout(() => {
 				const created = this.store.allItems.find((i) => i.filePath === filePath || i.realPath === filePath);
 				if (created) this.onSelectItem(created);
 			}, 100);

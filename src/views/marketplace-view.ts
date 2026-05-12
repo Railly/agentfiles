@@ -62,8 +62,8 @@ export class MarketplacePanel {
 				cls: "as-mp-search-input",
 			});
 			this.inputEl.addEventListener("input", () => {
-				if (this.searchTimer) activeWindow.clearTimeout(this.searchTimer);
-				this.searchTimer = activeWindow.setTimeout(() => {
+				if (this.searchTimer) window.clearTimeout(this.searchTimer);
+				this.searchTimer = window.setTimeout(() => {
 					void this.doSearch(this.inputEl!.value);
 				}, 300);
 			});

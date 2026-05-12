@@ -2,13 +2,14 @@
 	display: none;
 }
 
-.workspace-leaf-content[data-type="agentfiles-view"] .view-content {
-	padding: 0 !important;
+.workspace-leaf-content[data-type="agentfiles-view"] > .view-content {
+	padding: 0;
 	height: 100%;
 }
 
-.as-hidden {
-	display: none !important;
+.as-container .as-hidden,
+.as-hidden.as-hidden {
+	display: none;
 }
 
 .as-container {
@@ -242,6 +243,7 @@
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
+	color: var(--tool-color);
 }
 
 .as-tool-badge-dot {
@@ -249,10 +251,6 @@
 	height: 8px;
 	border-radius: 50%;
 	background-color: var(--tool-color);
-}
-
-.as-tool-badge {
-	color: var(--tool-color);
 }
 
 .as-tool-svg {
@@ -727,8 +725,8 @@
 	.as-dash-row {
 		grid-template-columns: 1fr;
 	}
-	.as-dash-stats {
-		grid-template-columns: repeat(2, 1fr) !important;
+	.as-dashboard .as-dash-stats {
+		grid-template-columns: repeat(2, 1fr);
 	}
 }
 
@@ -1536,6 +1534,7 @@
 	display: flex;
 	align-items: center;
 	gap: 8px;
+	margin-top: 8px;
 }
 
 .as-mp-install-btn {
@@ -1589,8 +1588,8 @@
 	margin: 0 0 4px;
 }
 
-.as-install-modal .setting-item-heading > .setting-item-name {
-	padding-left: 0 !important;
+.as-install-modal .setting-item.setting-item-heading > .setting-item-info > .setting-item-name {
+	padding-left: 0;
 }
 
 .as-install-source {
@@ -1605,13 +1604,6 @@
 	align-items: center;
 	margin-right: 6px;
 	vertical-align: middle;
-}
-
-.as-mp-install-row {
-	display: flex;
-	align-items: center;
-	gap: 8px;
-	margin-top: 8px;
 }
 
 .as-mp-uninstall-btn {
@@ -1782,10 +1774,6 @@
 	);
 }
 
-.as-install-modal .setting-item-heading > .setting-item-name {
-	padding-left: 0 !important;
-}
-
 .as-install-scroll {
 	max-height: 300px;
 	overflow-y: auto;
@@ -1831,10 +1819,10 @@
 }
 
 /* Create skill */
-.as-sidebar-create {
+.as-panel-sidebar .as-sidebar-create {
 	border-top: 1px solid var(--background-modifier-border);
 	margin-top: 4px;
-	padding-top: 8px !important;
+	padding-top: 8px;
 }
 
 .as-create-modal {
@@ -2406,8 +2394,9 @@
 	background: var(--background-secondary-alt);
 }
 
-.as-conv-msg-selected {
-	background: color-mix(in srgb, var(--interactive-accent) 8%, transparent) !important;
+.as-conv-msg.as-conv-msg-selected,
+.as-conv-msg.as-conv-msg-selected:hover {
+	background: color-mix(in srgb, var(--interactive-accent) 8%, transparent);
 	border-left: 3px solid var(--interactive-accent);
 	padding-left: 17px;
 }
@@ -2563,8 +2552,8 @@
 }
 
 /* Primary toolbar button */
-.as-toolbar-btn-primary {
-	color: var(--interactive-accent) !important;
+.as-toolbar-btn.as-toolbar-btn-primary {
+	color: var(--interactive-accent);
 }
 
 .as-toolbar-btn-primary:hover {
