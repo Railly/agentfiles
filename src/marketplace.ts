@@ -206,8 +206,10 @@ export const VALID_AGENTS: { id: string; label: string }[] = [
 	{ id: "gemini-cli", label: "Gemini CLI" },
 	{ id: "goose", label: "Goose" },
 	{ id: "kiro-cli", label: "Kiro" },
+	{ id: "kilo", label: "Kilo Code" },
 	{ id: "roo", label: "Roo Code" },
 	{ id: "continue", label: "Continue" },
+	{ id: "openhands", label: "OpenHands" },
 	{ id: "antigravity", label: "Antigravity" },
 	{ id: "warp", label: "Warp" },
 	{ id: "pi", label: "Pi" },
@@ -227,6 +229,12 @@ export const TOOL_TO_AGENT: Record<string, string> = {
 	"pi": "pi",
 	"global-agents": "claude-code",
 	"aider": "claude-code",
+	"cline": "cline",
+	"roo-code": "roo",
+	"kilocode": "kilo",
+	"continue": "continue",
+	"openhands": "openhands",
+	"goose": "goose",
 };
 
 export function installSkill(

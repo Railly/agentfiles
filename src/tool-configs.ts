@@ -137,6 +137,11 @@ export const TOOL_CONFIGS: ToolConfig[] = [
 		icon: "wind",
 		paths: [
 			{
+				baseDir: join(HOME, ".codeium", "windsurf", "skills"),
+				type: "skill",
+				pattern: "directory-with-skillmd",
+			},
+			{
 				baseDir: join(HOME, ".codeium", "windsurf", "memories"),
 				type: "memory",
 				pattern: "flat-md",
@@ -295,6 +300,100 @@ export const TOOL_CONFIGS: ToolConfig[] = [
 		],
 		agentPaths: [],
 		isInstalled: () => cached("global-agents", () => existsSync(join(HOME, ".agents", "skills"))),
+	},
+	{
+		id: "cline",
+		name: "Cline",
+		color: "#8b5cf6",
+		icon: "bot",
+		paths: [],
+		agentPaths: [],
+		isInstalled: () => cached("cline", () =>
+			existsSync(join(HOME, ".cline")) ||
+			existsSync(join(HOME, "Library", "Application Support", "Code", "User", "globalStorage", "saoudrizwan.claude-dev"))),
+	},
+	{
+		id: "roo-code",
+		name: "Roo Code",
+		color: "#0ea5e9",
+		icon: "rocket",
+		paths: [
+			{
+				baseDir: join(HOME, ".roo", "skills"),
+				type: "skill",
+				pattern: "directory-with-skillmd",
+			},
+		],
+		agentPaths: [],
+		isInstalled: () => cached("roo-code", () =>
+			existsSync(join(HOME, ".roo")) ||
+			existsSync(join(HOME, "Library", "Application Support", "Code", "User", "globalStorage", "rooveterinaryinc.roo-cline"))),
+	},
+	{
+		id: "kilocode",
+		name: "Kilo Code",
+		color: "#facc15",
+		icon: "square",
+		paths: [
+			{
+				baseDir: join(HOME, ".kilocode", "skills"),
+				type: "skill",
+				pattern: "directory-with-skillmd",
+			},
+		],
+		agentPaths: [],
+		isInstalled: () => cached("kilocode", () =>
+			existsSync(join(HOME, ".kilocode")) ||
+			existsSync(join(HOME, ".local", "share", "kilo")) ||
+			cliExists("kilo")),
+	},
+	{
+		id: "continue",
+		name: "Continue",
+		color: "#64748b",
+		icon: "play",
+		paths: [
+			{
+				baseDir: join(HOME, ".continue", "skills"),
+				type: "skill",
+				pattern: "directory-with-skillmd",
+			},
+		],
+		agentPaths: [],
+		isInstalled: () => cached("continue", () =>
+			existsSync(join(HOME, ".continue")) || cliExists("cn")),
+	},
+	{
+		id: "openhands",
+		name: "OpenHands",
+		color: "#fbbf24",
+		icon: "hand",
+		paths: [
+			{
+				baseDir: join(HOME, ".openhands", "skills"),
+				type: "skill",
+				pattern: "directory-with-skillmd",
+			},
+		],
+		agentPaths: [],
+		isInstalled: () => cached("openhands", () =>
+			existsSync(join(HOME, ".openhands")) || cliExists("openhands")),
+	},
+	{
+		id: "goose",
+		name: "Goose",
+		color: "#3b82f6",
+		icon: "feather",
+		paths: [
+			{
+				baseDir: join(XDG_CONFIG, "goose", "skills"),
+				type: "skill",
+				pattern: "directory-with-skillmd",
+			},
+		],
+		agentPaths: [],
+		isInstalled: () => cached("goose", () =>
+			existsSync(join(XDG_CONFIG, "goose")) || cliExists("goose")),
 	},
 	{
 		id: "aider",
