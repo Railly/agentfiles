@@ -1,0 +1,27 @@
+{
+	"compilerOptions": {
+		"target": "ES2022",
+		"module": "commonjs",
+		"moduleResolution": "node",
+		"lib": ["ES2022"],
+		"strict": true,
+		"esModuleInterop": true,
+		"skipLibCheck": true,
+		"noEmit": true,
+		"paths": {
+			"obsidian": ["./src/obsidian-shim.ts"]
+		}
+	},
+	"include": ["src/**/*.ts", "../src/**/*.ts"],
+	"exclude": [
+		"../src/main.ts",
+		"../src/views/**",
+		"../src/editor/**",
+		"../src/settings.ts",
+		"../src/watcher.ts",
+		"../src/store.ts",
+		"../src/conversations/**",
+		"../src/tool-icons.ts",
+		"../src/utils/shell.ts"
+	]
+}

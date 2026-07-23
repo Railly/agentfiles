@@ -1,0 +1,81 @@
+{
+	"name": "agentfiles-vscode",
+	"displayName": "agentfiles",
+	"description": "Browse, open, and install AI agent skills across 18 tools from one panel",
+	"version": "0.1.0",
+	"publisher": "railly",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/Railly/agentfiles",
+		"directory": "vscode"
+	},
+	"engines": {
+		"vscode": "^1.90.0"
+	},
+	"categories": ["Other"],
+	"activationEvents": [],
+	"main": "./dist/extension.js",
+	"contributes": {
+		"viewsContainers": {
+			"activitybar": [
+				{
+					"id": "agentfiles",
+					"title": "agentfiles",
+					"icon": "media/icon.svg"
+				}
+			]
+		},
+		"views": {
+			"agentfiles": [
+				{
+					"id": "agentfilesSkills",
+					"name": "Skills"
+				}
+			]
+		},
+		"commands": [
+			{
+				"command": "agentfiles.refresh",
+				"title": "agentfiles: Refresh skills",
+				"icon": "$(refresh)"
+			},
+			{
+				"command": "agentfiles.installSkill",
+				"title": "agentfiles: Install skill from GitHub"
+			},
+			{
+				"command": "agentfiles.openSkill",
+				"title": "agentfiles: Open skill file"
+			}
+		],
+		"menus": {
+			"view/title": [
+				{
+					"command": "agentfiles.refresh",
+					"when": "view == agentfilesSkills",
+					"group": "navigation"
+				},
+				{
+					"command": "agentfiles.installSkill",
+					"when": "view == agentfilesSkills"
+				}
+			]
+		}
+	},
+	"scripts": {
+		"build": "node esbuild.config.mjs production",
+		"dev": "node esbuild.config.mjs",
+		"typecheck": "tsc --noEmit",
+		"package": "vsce package --no-dependencies"
+	},
+	"devDependencies": {
+		"@types/js-yaml": "^4.0.9",
+		"@types/node": "^20.14.0",
+		"@types/vscode": "^1.90.0",
+		"@vscode/vsce": "^3.2.1",
+		"esbuild": "^0.24.0",
+		"js-yaml": "^4.1.1",
+		"typescript": "^5.6.0"
+	}
+}
