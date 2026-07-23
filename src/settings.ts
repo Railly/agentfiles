@@ -1,6 +1,13 @@
+import { homedir } from "os";
 import { PluginSettingTab, Setting, type App } from "obsidian";
 import { TOOL_CONFIGS } from "./tool-configs";
 import type AgentfilesPlugin from "./main";
+
+function expandHome(path: string): string {
+	if (path === "~") return homedir();
+	if (path.startsWith("~/")) return homedir() + path.slice(1);
+	return path;
+}
 
 export class AgentfilesSettingTab extends PluginSettingTab {
 	plugin: AgentfilesPlugin;
@@ -137,6 +144,55 @@ export class AgentfilesSettingTab extends PluginSettingTab {
 						await this.plugin.saveSettings();
 						this.plugin.refreshStore();
 						this.plugin.restartWatcher();
+					})
+			);
+
+		new Setting(containerEl).setName("Custom paths").setHeading();
+
+		for (const path of this.plugin.settings.customScanPaths) {
+			new Setting(containerEl)
+				.setName(path)
+				.addExtraButton((btn) =>
+					btn
+						.setIcon("trash")
+						.setTooltip("Remove")
+						.onClick(async () => {
+							this.plugin.settings.customScanPaths =
+								this.plugin.settings.customScanPaths.filter((p) => p !== path);
+							await this.plugin.saveSettings();
+							this.plugin.refreshStore();
+							this.plugin.restartWatcher();
+							this.display();
+						})
+				);
+		}
+
+		let newPathValue = "";
+		new Setting(containerEl)
+			.setName("Add custom path")
+			.setDesc(
+				"Additional directories to scan for project-level skills (looks for .claude/skills, .claude/commands, .claude/agents, .cursor/skills, .codex/skills inside each path)"
+			)
+			.addText((text) =>
+				text
+					.setPlaceholder("~/projects/some-project")
+					.onChange((value) => {
+						newPathValue = value;
+					})
+			)
+			.addButton((btn) =>
+				btn
+					.setButtonText("Add")
+					.onClick(async () => {
+						const trimmed = newPathValue.trim();
+						if (!trimmed) return;
+						const expanded = expandHome(trimmed);
+						if (this.plugin.settings.customScanPaths.includes(expanded)) return;
+						this.plugin.settings.customScanPaths.push(expanded);
+						await this.plugin.saveSettings();
+						this.plugin.refreshStore();
+						this.plugin.restartWatcher();
+						this.display();
 					})
 			);
 
