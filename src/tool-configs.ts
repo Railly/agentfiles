@@ -72,6 +72,21 @@ function cliExists(name: string): boolean {
 	return false;
 }
 
+const VSCODE_VARIANTS = ["Code", "Code - Insiders", "Cursor", "VSCodium", "Windsurf"];
+
+function vscodeExtensionStorageExists(extensionId: string): boolean {
+	let bases: string[];
+	if (process.platform === "darwin") {
+		bases = VSCODE_VARIANTS.map((v) => join(HOME, "Library", "Application Support", v, "User", "globalStorage", extensionId));
+	} else if (IS_WIN) {
+		const appData = process.env.APPDATA || join(HOME, "AppData", "Roaming");
+		bases = VSCODE_VARIANTS.map((v) => join(appData, v, "User", "globalStorage", extensionId));
+	} else {
+		bases = VSCODE_VARIANTS.map((v) => join(XDG_CONFIG, v, "User", "globalStorage", extensionId));
+	}
+	return bases.some((b) => existsSync(b));
+}
+
 export const TOOL_CONFIGS: ToolConfig[] = [
 	{
 		id: "claude-code",
@@ -310,7 +325,7 @@ export const TOOL_CONFIGS: ToolConfig[] = [
 		agentPaths: [],
 		isInstalled: () => cached("cline", () =>
 			existsSync(join(HOME, ".cline")) ||
-			existsSync(join(HOME, "Library", "Application Support", "Code", "User", "globalStorage", "saoudrizwan.claude-dev"))),
+			vscodeExtensionStorageExists("saoudrizwan.claude-dev")),
 	},
 	{
 		id: "roo-code",
@@ -327,7 +342,7 @@ export const TOOL_CONFIGS: ToolConfig[] = [
 		agentPaths: [],
 		isInstalled: () => cached("roo-code", () =>
 			existsSync(join(HOME, ".roo")) ||
-			existsSync(join(HOME, "Library", "Application Support", "Code", "User", "globalStorage", "rooveterinaryinc.roo-cline"))),
+			vscodeExtensionStorageExists("RooVeterinaryInc.roo-cline")),
 	},
 	{
 		id: "kilocode",
