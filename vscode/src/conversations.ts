@@ -104,6 +104,7 @@ export function conversationHtml(item: ConversationItem, visibleCount: number): 
 <html>
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline';">
 <style>
 	body { font-family: var(--vscode-font-family); color: var(--vscode-foreground); padding: 0 16px 32px; max-width: 900px; margin: 0 auto; }
 	.toolbar { position: sticky; top: 0; background: var(--vscode-editor-background); padding: 12px 0; border-bottom: 1px solid var(--vscode-panel-border); z-index: 2; }

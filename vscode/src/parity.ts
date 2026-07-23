@@ -111,7 +111,7 @@ export function openSkillDetailPanel(item: SkillItem): void {
 		.join("");
 
 	panel.webview.html = `<!DOCTYPE html>
-<html><head><meta charset="utf-8"><style>
+<html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline';"><style>
 	body { font-family: var(--vscode-font-family); color: var(--vscode-foreground); padding: 8px 20px 32px; }
 	h1 { font-size: 1.15em; margin-bottom: 4px; }
 	.desc { opacity: 0.8; margin-bottom: 8px; }

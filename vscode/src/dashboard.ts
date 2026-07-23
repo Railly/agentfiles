@@ -125,7 +125,7 @@ function dashboardHtml(stats: StatsJson | null, health: HealthJson | null, burn:
 	}
 
 	return `<!DOCTYPE html>
-<html><head><meta charset="utf-8"><style>
+<html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline';"><style>
 	body { font-family: var(--vscode-font-family); color: var(--vscode-foreground); padding: 8px 20px 40px; max-width: 780px; margin: 0 auto; }
 	h2 { font-size: 0.95em; text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.75; margin: 26px 0 10px; }
 	.tiles { display: flex; gap: 10px; flex-wrap: wrap; }
