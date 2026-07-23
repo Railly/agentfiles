@@ -2,8 +2,11 @@ import * as vscode from "vscode";
 import { scanAll } from "../../src/scanner";
 import { TOOL_CONFIGS } from "../../src/tool-configs";
 import { TOOL_SVGS } from "../../src/tool-svgs";
-import { DEFAULT_SETTINGS, type SkillItem } from "../../src/types";
+import { DEFAULT_SETTINGS, type ConversationItem, type SkillItem } from "../../src/types";
 import { installSkillAsync, TOOL_TO_AGENT, VALID_AGENTS } from "../../src/marketplace";
+import { ConversationsProvider, openConversationPanel } from "./conversations";
+import { openDashboardPanel } from "./dashboard";
+import { browseMarketplace, createSkillFlow, openSkillDetailPanel, removeSkillFlow, updateAllFlow } from "./parity";
 
 type TreeNode = ToolNode | SkillNode;
 
@@ -105,10 +108,21 @@ class SkillsProvider implements vscode.TreeDataProvider<TreeNode> {
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
 	await vscode.workspace.fs.createDirectory(context.globalStorageUri);
 	const provider = new SkillsProvider(context.globalStorageUri);
+	const conversations = new ConversationsProvider();
+	const refreshSkills = () => provider.refresh();
 
 	context.subscriptions.push(
 		vscode.window.registerTreeDataProvider("agentfilesSkills", provider),
+		vscode.window.registerTreeDataProvider("agentfilesConversations", conversations),
 		vscode.commands.registerCommand("agentfiles.refresh", () => provider.refresh()),
+		vscode.commands.registerCommand("agentfiles.refreshConversations", () => conversations.refresh()),
+		vscode.commands.registerCommand("agentfiles.openConversation", (item: ConversationItem) => openConversationPanel(item)),
+		vscode.commands.registerCommand("agentfiles.openDashboard", () => openDashboardPanel()),
+		vscode.commands.registerCommand("agentfiles.browseMarketplace", () => browseMarketplace(refreshSkills)),
+		vscode.commands.registerCommand("agentfiles.createSkill", () => createSkillFlow(refreshSkills)),
+		vscode.commands.registerCommand("agentfiles.skillDetail", (node: SkillNode) => openSkillDetailPanel(node.item)),
+		vscode.commands.registerCommand("agentfiles.removeSkill", (node: SkillNode) => removeSkillFlow(node.item, refreshSkills)),
+		vscode.commands.registerCommand("agentfiles.updateAllSkills", () => updateAllFlow(refreshSkills)),
 		vscode.commands.registerCommand("agentfiles.installSkill", async () => {
 			const source = await vscode.window.showInputBox({
 				prompt: "GitHub source (owner/repo or owner/repo@skill)",
@@ -142,6 +156,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 	);
 
 	await provider.refresh();
+	void conversations.refresh();
 }
 
 export function deactivate(): void {}
