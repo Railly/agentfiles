@@ -31,6 +31,10 @@
 				{
 					"id": "agentfilesSkills",
 					"name": "Skills"
+				},
+				{
+					"id": "agentfilesConversations",
+					"name": "Conversations"
 				}
 			]
 		},
@@ -41,12 +45,40 @@
 				"icon": "$(refresh)"
 			},
 			{
+				"command": "agentfiles.refreshConversations",
+				"title": "agentfiles: Refresh conversations",
+				"icon": "$(refresh)"
+			},
+			{
 				"command": "agentfiles.installSkill",
 				"title": "agentfiles: Install skill from GitHub"
 			},
 			{
-				"command": "agentfiles.openSkill",
-				"title": "agentfiles: Open skill file"
+				"command": "agentfiles.browseMarketplace",
+				"title": "agentfiles: Browse marketplace",
+				"icon": "$(search)"
+			},
+			{
+				"command": "agentfiles.createSkill",
+				"title": "agentfiles: Create skill",
+				"icon": "$(add)"
+			},
+			{
+				"command": "agentfiles.openDashboard",
+				"title": "agentfiles: Open dashboard",
+				"icon": "$(graph)"
+			},
+			{
+				"command": "agentfiles.updateAllSkills",
+				"title": "agentfiles: Update all skills"
+			},
+			{
+				"command": "agentfiles.skillDetail",
+				"title": "Skill details"
+			},
+			{
+				"command": "agentfiles.removeSkill",
+				"title": "Remove skill"
 			}
 		],
 		"menus": {
@@ -54,11 +86,46 @@
 				{
 					"command": "agentfiles.refresh",
 					"when": "view == agentfilesSkills",
-					"group": "navigation"
+					"group": "navigation@3"
+				},
+				{
+					"command": "agentfiles.browseMarketplace",
+					"when": "view == agentfilesSkills",
+					"group": "navigation@1"
+				},
+				{
+					"command": "agentfiles.createSkill",
+					"when": "view == agentfilesSkills",
+					"group": "navigation@2"
+				},
+				{
+					"command": "agentfiles.openDashboard",
+					"when": "view == agentfilesSkills",
+					"group": "navigation@0"
 				},
 				{
 					"command": "agentfiles.installSkill",
 					"when": "view == agentfilesSkills"
+				},
+				{
+					"command": "agentfiles.updateAllSkills",
+					"when": "view == agentfilesSkills"
+				},
+				{
+					"command": "agentfiles.refreshConversations",
+					"when": "view == agentfilesConversations",
+					"group": "navigation"
+				}
+			],
+			"view/item/context": [
+				{
+					"command": "agentfiles.skillDetail",
+					"when": "view == agentfilesSkills && viewItem == skill",
+					"group": "inline@1"
+				},
+				{
+					"command": "agentfiles.removeSkill",
+					"when": "view == agentfilesSkills && viewItem == skill"
 				}
 			]
 		}
