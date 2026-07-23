@@ -4,10 +4,9 @@ import { Nav } from "@/components/nav";
 
 async function getStarCount(): Promise<number> {
 	const doFetch = globalThis.fetch;
-	const res = await doFetch(
-		"https://api.github.com/repos/Railly/agentfiles",
-		{ next: { revalidate: 3600 } },
-	);
+	const res = await doFetch("https://api.github.com/repos/Railly/agentfiles", {
+		next: { revalidate: 3600 },
+	});
 	if (!res.ok) return 428;
 	const data = await res.json();
 	return data.stargazers_count ?? 428;
@@ -22,7 +21,7 @@ const features = [
 	{
 		title: "Skill Scanner",
 		description:
-			"Auto-discovers skills, commands, and agents across Claude Code, Cursor, Codex, Windsurf, Copilot, and 10+ tools from a single unified view.",
+			"Auto-discovers skills, commands, and agents across Claude Code, Cursor, Codex, Windsurf, Copilot, and 12 tools from a single unified view.",
 		icon: ScanIcon,
 	},
 	{
@@ -101,8 +100,8 @@ function HeroSection() {
 					</h1>
 					<p className="text-lg text-[var(--muted)] max-w-xl leading-relaxed">
 						Browse, create, and edit skills, commands, and agents across Claude
-						Code, Cursor, Codex, Windsurf, and 13+ AI coding tools &mdash; from
-						a single Obsidian panel.
+						Code, Cursor, Codex, Windsurf, and 12 AI coding tools &mdash; from a
+						single Obsidian panel.
 					</p>
 					<div className="flex items-center gap-3 flex-wrap pt-2">
 						<a

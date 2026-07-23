@@ -184,9 +184,7 @@ function InstallationSection() {
 				</a>
 				.
 			</p>
-			<p className="font-semibold text-[var(--foreground)]">
-				Inside Obsidian
-			</p>
+			<p className="font-semibold text-[var(--foreground)]">Inside Obsidian</p>
 			<div className="space-y-3">
 				<div className="flex gap-3">
 					<span className="font-mono text-xs text-violet-400 shrink-0 mt-0.5">
@@ -571,16 +569,36 @@ function ConfigurationSection() {
 			</p>
 			<ul className="space-y-2">
 				<li>
+					<strong className="text-[var(--foreground)]">File watching</strong>{" "}
+					&mdash; automatically detect changes to skill files, with a
+					configurable debounce
+				</li>
+				<li>
+					<strong className="text-[var(--foreground)]">Display names</strong>{" "}
+					&mdash; how skill and command names appear in the list
+				</li>
+				<li>
+					<strong className="text-[var(--foreground)]">Deep search</strong>{" "}
+					&mdash; search file contents by default, with a configurable scope
+				</li>
+				<li>
+					<strong className="text-[var(--foreground)]">Package runner</strong>{" "}
+					&mdash; choose <Code>npx</Code> or <Code>bunx</Code> for marketplace
+					installs (auto-detect by default)
+				</li>
+				<li>
+					<strong className="text-[var(--foreground)]">Project scanning</strong>{" "}
+					&mdash; scan directories under a projects home folder for
+					project-level skills
+				</li>
+				<li>
 					<strong className="text-[var(--foreground)]">Custom paths</strong>{" "}
-					&mdash; add additional directories to scan beyond the defaults
+					&mdash; add specific directories to scan beyond the defaults (supports{" "}
+					<Code>~</Code> expansion)
 				</li>
 				<li>
-					<strong className="text-[var(--foreground)]">Excluded paths</strong>{" "}
-					&mdash; glob patterns to ignore
-				</li>
-				<li>
-					<strong className="text-[var(--foreground)]">skillkit path</strong>{" "}
-					&mdash; override the default <Code>skillkit</Code> binary location
+					<strong className="text-[var(--foreground)]">Tools</strong> &mdash;
+					enable or disable individual detected tools
 				</li>
 			</ul>
 		</DocSection>
