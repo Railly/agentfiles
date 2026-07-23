@@ -61,6 +61,57 @@ skillkit scan
 
 Desktop only (macOS, Windows, Linux) — reads files outside your vault.
 
+## FAQ
+
+### What is Agentfiles?
+
+An AI skills manager for Obsidian. Browse, create, and manage skills, commands, and agents across 12 coding agents, all from your vault. Full docs: [agentfiles.crafter.run/docs](https://agentfiles.crafter.run/docs).
+
+### What can I do with Agentfiles?
+
+See [What it does](#what-it-does) above. Full feature list and screenshots: [agentfiles.crafter.run/docs](https://agentfiles.crafter.run/docs).
+
+### What tools are supported?
+
+| Tool | Skills | Commands | Rules / Memories | Agents |
+|------|--------|----------|-------------------|--------|
+| Claude Code | `~/.claude/skills/` | `~/.claude/commands/` | | `~/.claude/agents/` |
+| Cursor | `~/.cursor/skills/` | | `~/.cursor/rules/` | `~/.cursor/agents/` |
+| Windsurf | | | `~/.codeium/windsurf/memories/`, `~/.windsurf/rules/` | |
+| Codex | `~/.codex/skills/` | `~/.codex/prompts/` | `~/.codex/memories/` | `~/.codex/agents/` |
+| Copilot | `~/.copilot/skills/` | | | |
+| Amp | `$XDG_CONFIG/amp/skills/` | | | |
+| OpenCode | `$XDG_CONFIG/opencode/skills/` | | | |
+| Pi | `~/.pi/agent/skills/` | | | |
+| Antigravity | `~/.gemini/antigravity/skills/` | | | |
+| Global | `~/.agents/skills/` | | | |
+| Claude Desktop | detection only | | | |
+| Aider | detection only | | | |
+
+### How do I install Agentfiles?
+
+See [Install](#install) above.
+
+### What is skillkit analytics?
+
+Optional CLI for the Dashboard's usage metrics (burn rate, context tax, health):
+
+```bash
+npm i -g @crafter/skillkit
+# or: bun add -g @crafter/skillkit
+skillkit scan
+```
+
+### Is Agentfiles free and open source?
+
+Yes, MIT licensed. See [LICENSE](LICENSE).
+
+### Where can I get help?
+
+- [Obsidian Community](https://community.obsidian.md/plugins/agentfiles)
+- [Website](https://agentfiles.crafter.run)
+- [GitHub Issues](https://github.com/Railly/agentfiles/issues)
+
 ## License
 
 MIT
