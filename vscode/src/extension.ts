@@ -3,7 +3,7 @@ import { scanAll } from "../../src/scanner";
 import { TOOL_CONFIGS } from "../../src/tool-configs";
 import { TOOL_SVGS } from "../../src/tool-svgs";
 import { DEFAULT_SETTINGS, type SkillItem } from "../../src/types";
-import { installSkill, TOOL_TO_AGENT, VALID_AGENTS } from "../../src/marketplace";
+import { installSkillAsync, TOOL_TO_AGENT, VALID_AGENTS } from "../../src/marketplace";
 
 type TreeNode = ToolNode | SkillNode;
 
@@ -41,7 +41,18 @@ class SkillsProvider implements vscode.TreeDataProvider<TreeNode> {
 		for (const list of this.byTool.values()) {
 			list.sort((a, b) => a.name.localeCompare(b.name));
 		}
+		await Promise.all([...this.byTool.keys()].map((toolId) => this.ensureToolIcon(toolId)));
 		this.emitter.fire(undefined);
+	}
+
+	private async ensureToolIcon(toolId: string): Promise<void> {
+		if (this.iconCache.has(toolId)) return;
+		const svg = TOOL_SVGS[toolId];
+		if (!svg) return;
+		const content = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${svg.viewBox}" width="16" height="16" fill="none" color="#9da5b4">${svg.paths}</svg>`;
+		const uri = vscode.Uri.joinPath(this.storageUri, `${toolId}.svg`);
+		await vscode.workspace.fs.writeFile(uri, new TextEncoder().encode(content));
+		this.iconCache.set(toolId, uri);
 	}
 
 	getChildren(node?: TreeNode): TreeNode[] {
@@ -87,15 +98,7 @@ class SkillsProvider implements vscode.TreeDataProvider<TreeNode> {
 	}
 
 	private toolIcon(toolId: string): vscode.Uri | undefined {
-		const svg = TOOL_SVGS[toolId];
-		if (!svg) return undefined;
-		const cached = this.iconCache.get(toolId);
-		if (cached) return cached;
-		const content = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${svg.viewBox}" width="16" height="16" fill="none" color="#9da5b4">${svg.paths}</svg>`;
-		const uri = vscode.Uri.joinPath(this.storageUri, `${toolId}.svg`);
-		vscode.workspace.fs.writeFile(uri, new TextEncoder().encode(content));
-		this.iconCache.set(toolId, uri);
-		return uri;
+		return this.iconCache.get(toolId);
 	}
 }
 
@@ -126,7 +129,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 			await vscode.window.withProgress(
 				{ location: vscode.ProgressLocation.Notification, title: `Installing ${source}...` },
 				async () => {
-					const result = installSkill(source, picks.map((p) => p.id));
+					const result = await installSkillAsync(source, picks.map((p) => p.id));
 					if (result.success) {
 						vscode.window.showInformationMessage(`Installed ${source}`);
 						await provider.refresh();
