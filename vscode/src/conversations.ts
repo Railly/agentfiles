@@ -1,6 +1,4 @@
 import * as vscode from "vscode";
-import { parseAllConversationsAsync } from "../../src/conversations/parser";
-import { tagAllConversations } from "../../src/conversations/tagger";
 import type { ConversationItem, ConversationMessage } from "../../src/types";
 
 type ConvNode = ProjectNode | ConversationNode;
@@ -14,61 +12,6 @@ interface ProjectNode {
 interface ConversationNode {
 	kind: "conversation";
 	item: ConversationItem;
-}
-
-export class ConversationsProvider implements vscode.TreeDataProvider<ConvNode> {
-	private emitter = new vscode.EventEmitter<ConvNode | undefined>();
-	readonly onDidChangeTreeData = this.emitter.event;
-	private byProject = new Map<string, ConversationItem[]>();
-
-	async refresh(): Promise<void> {
-		const items = await parseAllConversationsAsync();
-		tagAllConversations(items);
-		this.byProject.clear();
-		for (const item of items) {
-			const list = this.byProject.get(item.project) || [];
-			list.push(item);
-			this.byProject.set(item.project, list);
-		}
-		for (const list of this.byProject.values()) {
-			list.sort((a, b) => (b.lastTimestamp || "").localeCompare(a.lastTimestamp || ""));
-		}
-		this.emitter.fire(undefined);
-	}
-
-	getChildren(node?: ConvNode): ConvNode[] {
-		if (!node) {
-			return [...this.byProject.entries()]
-				.sort((a, b) => a[0].localeCompare(b[0]))
-				.map(([name, list]) => ({ kind: "project" as const, name, count: list.length }));
-		}
-		if (node.kind === "project") {
-			return (this.byProject.get(node.name) || []).map((item) => ({ kind: "conversation" as const, item }));
-		}
-		return [];
-	}
-
-	getTreeItem(node: ConvNode): vscode.TreeItem {
-		if (node.kind === "project") {
-			const el = new vscode.TreeItem(node.name, vscode.TreeItemCollapsibleState.Collapsed);
-			el.description = String(node.count);
-			el.iconPath = new vscode.ThemeIcon("folder");
-			return el;
-		}
-		const title = node.item.title.length > 60 ? `${node.item.title.slice(0, 60)}...` : node.item.title;
-		const el = new vscode.TreeItem(title, vscode.TreeItemCollapsibleState.None);
-		el.description = `${node.item.messageCount} msgs`;
-		el.tooltip = new vscode.MarkdownString(
-			`**${node.item.title}**\n\n${node.item.project} · ${node.item.messageCount} messages\n\n${(node.item.tags || []).map((t) => `\`${t}\``).join(" ")}`,
-		);
-		el.iconPath = new vscode.ThemeIcon(node.item.isFavorite ? "star-full" : "comment-discussion");
-		el.command = {
-			command: "agentfiles.openConversation",
-			title: "Open conversation",
-			arguments: [node.item],
-		};
-		return el;
-	}
 }
 
 const PAGE_SIZE = 20;
