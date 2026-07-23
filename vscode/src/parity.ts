@@ -225,6 +225,20 @@ export async function removeSkillFlow(item: SkillItem, onRemoved: () => Promise<
 	}
 }
 
+export async function removeSkillFlowByName(onRemoved: () => Promise<void>): Promise<void> {
+	const name = await vscode.window.showInputBox({ prompt: "Skill name to remove", placeHolder: "my-skill" });
+	if (!name) return;
+	const confirm = await vscode.window.showWarningMessage(`Remove skill "${name}"?`, { modal: true }, "Remove");
+	if (confirm !== "Remove") return;
+	const result = await removeSkillAsync(name);
+	if (result.success) {
+		vscode.window.showInformationMessage(`Removed ${name}`);
+		await onRemoved();
+	} else {
+		vscode.window.showErrorMessage(`Remove failed: ${result.output.slice(0, 300)}`);
+	}
+}
+
 export async function updateAllFlow(onDone: () => Promise<void>): Promise<void> {
 	await vscode.window.withProgress(
 		{ location: vscode.ProgressLocation.Notification, title: "Updating all skills..." },

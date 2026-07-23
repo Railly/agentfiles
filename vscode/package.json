@@ -29,34 +29,32 @@
 		"views": {
 			"agentfiles": [
 				{
-					"id": "agentfilesSkills",
-					"name": "Skills"
+					"type": "webview",
+					"id": "agentfiles.library",
+					"name": "Library"
 				},
 				{
-					"id": "agentfilesConversations",
-					"name": "Conversations"
+					"type": "webview",
+					"id": "agentfiles.sessions",
+					"name": "Sessions"
+				},
+				{
+					"type": "webview",
+					"id": "agentfiles.dashboard",
+					"name": "Dashboard"
+				},
+				{
+					"type": "webview",
+					"id": "agentfiles.marketplace",
+					"name": "Marketplace"
 				}
 			]
 		},
 		"commands": [
 			{
 				"command": "agentfiles.refresh",
-				"title": "agentfiles: Refresh skills",
+				"title": "agentfiles: Refresh",
 				"icon": "$(refresh)"
-			},
-			{
-				"command": "agentfiles.refreshConversations",
-				"title": "agentfiles: Refresh conversations",
-				"icon": "$(refresh)"
-			},
-			{
-				"command": "agentfiles.installSkill",
-				"title": "agentfiles: Install skill from GitHub"
-			},
-			{
-				"command": "agentfiles.browseMarketplace",
-				"title": "agentfiles: Browse marketplace",
-				"icon": "$(search)"
 			},
 			{
 				"command": "agentfiles.createSkill",
@@ -64,68 +62,41 @@
 				"icon": "$(add)"
 			},
 			{
-				"command": "agentfiles.openDashboard",
-				"title": "agentfiles: Open dashboard",
-				"icon": "$(graph)"
+				"command": "agentfiles.browseMarketplace",
+				"title": "agentfiles: Search marketplace (quick pick)"
 			},
 			{
 				"command": "agentfiles.updateAllSkills",
 				"title": "agentfiles: Update all skills"
 			},
 			{
-				"command": "agentfiles.skillDetail",
-				"title": "Skill details"
+				"command": "agentfiles.removeSkillByName",
+				"title": "agentfiles: Remove skill"
 			},
 			{
-				"command": "agentfiles.removeSkill",
-				"title": "Remove skill"
+				"command": "agentfiles.openConversationTab",
+				"title": "agentfiles: Open conversation in editor tab"
+			},
+			{
+				"command": "agentfiles.openSkill",
+				"title": "agentfiles: Open skill file"
+			},
+			{
+				"command": "agentfiles.openDashboard",
+				"title": "agentfiles: Focus dashboard"
 			}
 		],
 		"menus": {
 			"view/title": [
 				{
 					"command": "agentfiles.refresh",
-					"when": "view == agentfilesSkills",
-					"group": "navigation@3"
-				},
-				{
-					"command": "agentfiles.browseMarketplace",
-					"when": "view == agentfilesSkills",
-					"group": "navigation@1"
-				},
-				{
-					"command": "agentfiles.createSkill",
-					"when": "view == agentfilesSkills",
+					"when": "view == agentfiles.library",
 					"group": "navigation@2"
 				},
 				{
-					"command": "agentfiles.openDashboard",
-					"when": "view == agentfilesSkills",
-					"group": "navigation@0"
-				},
-				{
-					"command": "agentfiles.installSkill",
-					"when": "view == agentfilesSkills"
-				},
-				{
-					"command": "agentfiles.updateAllSkills",
-					"when": "view == agentfilesSkills"
-				},
-				{
-					"command": "agentfiles.refreshConversations",
-					"when": "view == agentfilesConversations",
-					"group": "navigation"
-				}
-			],
-			"view/item/context": [
-				{
-					"command": "agentfiles.skillDetail",
-					"when": "view == agentfilesSkills && viewItem == skill",
-					"group": "inline@1"
-				},
-				{
-					"command": "agentfiles.removeSkill",
-					"when": "view == agentfilesSkills && viewItem == skill"
+					"command": "agentfiles.createSkill",
+					"when": "view == agentfiles.library",
+					"group": "navigation@1"
 				}
 			]
 		}
