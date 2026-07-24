@@ -3,12 +3,13 @@
 	"version": "0.1.0",
 	"private": true,
 	"scripts": {
-		"dev": "next dev",
-		"build": "next build",
+		"dev": "bun run scripts/sync-tools-meta.ts && next dev",
+		"build": "bun run scripts/sync-tools-meta.ts && next build",
 		"start": "next start",
 		"lint": "biome check .",
 		"lint:fix": "biome check --write .",
-		"format": "biome format --write ."
+		"format": "biome format --write .",
+		"sync-meta": "bun run scripts/sync-tools-meta.ts"
 	},
 	"dependencies": {
 		"@vercel/analytics": "^2.0.1",

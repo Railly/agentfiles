@@ -5,18 +5,24 @@ import {
 	readFileSync,
 	writeFileSync,
 	mkdirSync,
-	rmSync,
 	readdirSync,
 } from "fs";
 import { join, delimiter, dirname } from "path";
 import { homedir, platform } from "os";
-import { execSync, exec } from "child_process";
+import { execSync } from "child_process";
 import { createHash } from "crypto";
 import { scanAll, getInstalledTools } from "../../src/scanner";
 import { clearInstallCache } from "../../src/tool-configs";
 import { TOOL_CONFIGS } from "../../src/tool-configs";
 import { parseAllConversationsSync } from "../../src/conversations/parser";
 import { isSkillkitAvailable } from "../../src/skillkit";
+import {
+	getPopularSkills,
+	installSkillAsync,
+	type MarketplaceSkill,
+	removeSkillAsync,
+	searchSkills,
+} from "../../src/marketplace";
 import { DEFAULT_SETTINGS, type SkillItem, type ConversationItem, type ConversationMessage } from "../../src/types";
 import { libraryHtml, sessionsHtml, dashboardHtml, marketplaceHtml } from "./panels";
 
@@ -137,8 +143,6 @@ const IS_WIN = platform() === "win32";
 const TAG_FILE = join(HOME, ".claude", "agentfiles-conversations.json");
 const ENRICH_CACHE = join(HOME, ".skillkit", "enrichment-cache.json");
 const LOCK_PATH = join(HOME, ".agents", ".skill-lock.json");
-const API_BASE = "https://skills.sh/api";
-
 interface ConversationTagData {
 	customTags: Record<string, string[]>;
 	favorites: string[];
@@ -153,16 +157,6 @@ interface EnrichmentCache {
 	};
 }
 
-interface MarketplaceSkill {
-	id: string;
-	skillId: string;
-	name: string;
-	source: string;
-	installs: number;
-	description?: string;
-	content?: string;
-	installed?: boolean;
-}
 
 type SidebarFilter =
 	| { kind: "all" }
@@ -218,53 +212,6 @@ function buildPath(): string {
 	return [...extra, process.env.PATH || ""].join(delimiter);
 }
 
-function detectRunner(): string {
-	const names = IS_WIN ? ["bunx.cmd", "bunx.exe", "bunx"] : ["bunx"];
-	const dirs = IS_WIN
-		? [join(HOME, ".bun", "bin"), join(process.env.APPDATA || join(HOME, "AppData", "Roaming"), "npm")]
-		: [join(HOME, ".bun", "bin"), "/usr/local/bin", "/opt/homebrew/bin"];
-	for (const dir of dirs) {
-		for (const name of names) {
-			if (existsSync(join(dir, name))) return join(dir, name);
-		}
-	}
-	return "npx";
-}
-
-function getRunner(preference: "auto" | "npx" | "bunx" = "auto"): string {
-	if (preference === "npx") return "npx";
-	if (preference === "bunx") return detectRunner();
-	return detectRunner();
-}
-
-function execAsync(cmd: string, timeout = 120000): Promise<{ success: boolean; output: string }> {
-	return new Promise((resolve) => {
-		exec(
-			cmd,
-			{
-				encoding: "utf-8",
-				timeout,
-				env: { ...process.env, PATH: buildPath(), NO_COLOR: "1" },
-				shell: IS_WIN ? "cmd.exe" : undefined,
-			},
-			(error, stdout) => {
-				const out = String(stdout ?? "");
-				if (
-					!error ||
-					out.includes("Done") ||
-					out.includes("Installed") ||
-					out.includes("Removed") ||
-					out.includes("Updated")
-				) {
-					resolve({ success: true, output: out });
-				} else {
-					resolve({ success: false, output: error?.message ?? "Command failed" });
-				}
-			},
-		);
-	});
-}
-
 function getInstalledNames(): Set<string> {
 	const names = new Set<string>();
 	if (!existsSync(LOCK_PATH)) return names;
@@ -279,48 +226,17 @@ function getInstalledNames(): Set<string> {
 	return names;
 }
 
-const AGENT_SKILL_DIRS = [
-	join(HOME, ".claude", "skills"),
-	join(HOME, ".cursor", "skills"),
-	join(HOME, ".codex", "skills"),
-	join(HOME, ".codeium", "windsurf", "skills"),
-	join(HOME, ".config", "amp", "skills"),
-	join(HOME, ".config", "opencode", "skills"),
-	join(HOME, ".copilot", "skills"),
-	join(HOME, ".agents", "skills"),
-];
-
-function cleanupCopies(skillName: string): void {
-	for (const dir of AGENT_SKILL_DIRS) {
-		const skillPath = join(dir, skillName);
-		if (existsSync(skillPath)) {
-			try {
-				rmSync(skillPath, { recursive: true, force: true });
-			} catch {}
-		}
-	}
-	const lockPath = join(HOME, ".agents", ".skill-lock.json");
-	if (!existsSync(lockPath)) return;
-	try {
-		const data = JSON.parse(readFileSync(lockPath, "utf-8"));
-		if (data.skills && data.skills[skillName]) {
-			delete data.skills[skillName];
-			writeFileSync(lockPath, JSON.stringify(data, null, 2) + "\n", "utf-8");
-		}
-	} catch {}
-}
-
 const POPULAR_CACHE = join(HOME, ".skillkit", "marketplace-popular.json");
 
+// Disk-cached wrapper over src/marketplace getPopularSkills: serve the cache instantly,
+// refresh in the background. The one-off fetch and slug logic live in src/marketplace.
 async function marketplacePopular(): Promise<MarketplaceSkill[]> {
-	// Try disk cache first
 	try {
 		if (existsSync(POPULAR_CACHE)) {
 			const cached = JSON.parse(readFileSync(POPULAR_CACHE, "utf-8")) as MarketplaceSkill[];
 			if (cached.length > 0) {
 				const installed = getInstalledNames();
 				for (const s of cached) s.installed = installed.has(s.name);
-				// Refresh in background
 				void refreshPopularCache();
 				return cached;
 			}
@@ -330,31 +246,16 @@ async function marketplacePopular(): Promise<MarketplaceSkill[]> {
 }
 
 async function refreshPopularCache(): Promise<MarketplaceSkill[]> {
-	const queries = ["react", "next", "clerk", "stripe", "ai"];
-	const seen = new Set<string>();
-	const results: MarketplaceSkill[] = [];
-	for (const q of queries) {
-		const skills = await marketplaceSearch(q);
-		for (const s of skills) {
-			if (!seen.has(s.id)) { seen.add(s.id); results.push(s); }
-		}
-	}
-	const sorted = results.sort((a, b) => b.installs - a.installs).slice(0, 20);
-	try { writeFileSync(POPULAR_CACHE, JSON.stringify(sorted), "utf-8"); } catch {}
+	const sorted = await getPopularSkills();
+	try {
+		writeFileSync(POPULAR_CACHE, JSON.stringify(sorted), "utf-8");
+	} catch {}
 	return sorted;
 }
 
 async function marketplaceSearch(query: string): Promise<MarketplaceSkill[]> {
 	if (query.length < 2) return [];
-	try {
-		const res = await fetch(`${API_BASE}/search?q=${encodeURIComponent(query)}&limit=30`);
-		const data = (await res.json()) as { skills?: { id: string; skillId: string; name: string; installs: number; source: string }[] };
-		if (!data.skills) return [];
-		const installed = getInstalledNames();
-		return data.skills.map((s) => ({ ...s, installed: installed.has(s.name) }));
-	} catch {
-		return [];
-	}
+	return searchSkills(query);
 }
 
 async function marketplaceInstall(
@@ -364,25 +265,14 @@ async function marketplaceInstall(
 	global: boolean,
 	skillName?: string,
 ): Promise<{ success: boolean; output: string }> {
-	const agentFlag = agents.length > 0 ? `-a ${agents.join(" ")}` : "-a '*'";
-	const globalFlag = global ? "-g" : "";
-	const skillFlag = skillName ? `-s ${skillName}` : "";
-	const resolvedRunner = getRunner(runner);
-	const cmd = `${resolvedRunner} skills add ${source} ${agentFlag} ${globalFlag} ${skillFlag} -y`
-		.replace(/\s+/g, " ")
-		.trim();
-	return execAsync(cmd);
+	return installSkillAsync(source, agents, { runner, globalInstall: global, skillName });
 }
 
 async function marketplaceUninstall(
 	skillName: string,
 	runner: "auto" | "npx" | "bunx",
 ): Promise<{ success: boolean; output: string }> {
-	const resolvedRunner = getRunner(runner);
-	const cmd = `${resolvedRunner} skills remove ${skillName} -y`;
-	const result = await execAsync(cmd, 30000);
-	cleanupCopies(skillName);
-	return { success: true, output: result.output || `Cleaned ${skillName}` };
+	return removeSkillAsync(skillName, runner);
 }
 
 function sanitizeFilename(name: string): string {
@@ -1144,12 +1034,8 @@ class AgentfilesStore {
 				if (!skill) break;
 				const cfg = getConfig();
 				const runner = cfg.get<"auto" | "npx" | "bunx">("packageRunner") ?? "auto";
-				const result = await execAsync(
-					`${getRunner(runner)} skills remove ${skill.name} -y`,
-					30000,
-				);
+				const result = await removeSkillAsync(skill.name, runner);
 				if (result.success) {
-					cleanupCopies(skill.name);
 					vscode.window.showInformationMessage(`Skill "${skill.name}" removed`);
 					this._skills.delete(id);
 					this._sendSkillsUpdate();

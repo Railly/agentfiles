@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Footer } from "@/components/footer";
 import { Nav } from "@/components/nav";
+import { TOOL_COUNT } from "./tools-meta.generated";
 
 async function getStarCount(): Promise<number> {
 	const doFetch = globalThis.fetch;
@@ -20,8 +21,7 @@ async function StarCount() {
 const features = [
 	{
 		title: "Skill Scanner",
-		description:
-			"Auto-discovers skills, commands, and agents across Claude Code, Cursor, Codex, Windsurf, Copilot, and 12 tools from a single unified view.",
+		description: `Auto-discovers skills, commands, and agents across Claude Code, Cursor, Codex, Windsurf, Copilot, and ${TOOL_COUNT} tools from a single unified view.`,
 		icon: ScanIcon,
 	},
 	{
@@ -100,8 +100,8 @@ function HeroSection() {
 					</h1>
 					<p className="text-lg text-[var(--muted)] max-w-xl leading-relaxed">
 						Browse, create, and edit skills, commands, and agents across Claude
-						Code, Cursor, Codex, Windsurf, and 12 AI coding tools &mdash; from a
-						single Obsidian panel.
+						Code, Cursor, Codex, Windsurf, and {TOOL_COUNT} AI coding tools
+						&mdash; from a single Obsidian panel.
 					</p>
 					<div className="flex items-center gap-3 flex-wrap pt-2">
 						<a

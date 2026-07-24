@@ -2,17 +2,16 @@ import { Analytics } from "@vercel/analytics/next";
 import { GeistMono } from "geist/font/mono";
 import { GeistSans } from "geist/font/sans";
 import type { Metadata } from "next";
+import { TOOL_COUNT, TOOL_LEAD } from "./tools-meta.generated";
 import "./globals.css";
 
 export const metadata: Metadata = {
 	title: "Agentfiles — One plugin for all your agent files",
-	description:
-		"Browse, create, and edit skills, commands, and agents across Claude Code, Cursor, Codex, Windsurf, and 12 AI coding tools — from a single Obsidian panel.",
+	description: `Browse, create, and edit skills, commands, and agents across ${TOOL_LEAD}, and ${TOOL_COUNT} AI coding tools — from a single Obsidian panel.`,
 	metadataBase: new URL("https://agentfiles.crafter.run"),
 	openGraph: {
 		title: "Agentfiles — One plugin for all your agent files",
-		description:
-			"Browse, create, and edit skills, commands, and agents across Claude Code, Cursor, Codex, Windsurf, and 12 AI coding tools — from a single Obsidian panel.",
+		description: `Browse, create, and edit skills, commands, and agents across ${TOOL_LEAD}, and ${TOOL_COUNT} AI coding tools — from a single Obsidian panel.`,
 		url: "https://agentfiles.crafter.run",
 		siteName: "Agentfiles",
 		type: "website",
@@ -21,8 +20,7 @@ export const metadata: Metadata = {
 	twitter: {
 		card: "summary_large_image",
 		title: "Agentfiles — One plugin for all your agent files",
-		description:
-			"Browse, create, and edit skills, commands, and agents across Claude Code, Cursor, Codex, Windsurf, and 12 AI coding tools — from a single Obsidian panel.",
+		description: `Browse, create, and edit skills, commands, and agents across ${TOOL_LEAD}, and ${TOOL_COUNT} AI coding tools — from a single Obsidian panel.`,
 		images: ["/og-twitter.png"],
 	},
 };
