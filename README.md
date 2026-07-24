@@ -1,10 +1,10 @@
 # Agentfiles
 
-AI skills manager for Obsidian. Browse, create, and manage skills across Claude Code, Cursor, Codex, Windsurf, and 12 coding agents.
+AI skills manager for Obsidian. Browse, create, and manage skills across Claude Code, Cursor, Codex, Windsurf, and 17 coding agents.
 
 **[Open in Obsidian →](obsidian://show-plugin?id=agentfiles)** · [View on Obsidian Community](https://community.obsidian.md/plugins/agentfiles) · [Website](https://agentfiles.crafter.run) · [Latest release](https://github.com/Railly/agentfiles/releases/latest)
 
-![Browse skills, commands, and agents across 12 coding assistants](assets/browse.jpeg)
+![Browse skills, commands, and agents across 17 coding assistants](assets/browse.jpeg)
 
 ![Dashboard with burn rate, context tax, and health metrics](assets/dashboard.jpeg)
 
@@ -38,7 +38,7 @@ skillkit scan
 
 ## What it does
 
-- **Browse** skills, commands, and agents from 12 tools in one place
+- **Browse** skills, commands, and agents from 17 tools in one place
 - **Search** by name or file content with deep search toggle
 - **Create** new skills with a stepped wizard (pick tool, type, name)
 - **Edit** skills inline with markdown preview and Cmd+S save
@@ -52,11 +52,17 @@ skillkit scan
 |------|--------|----------|-------------------|--------|
 | Claude Code | `~/.claude/skills/` | `~/.claude/commands/` | | `~/.claude/agents/` |
 | Cursor | `~/.cursor/skills/` | | `~/.cursor/rules/` | `~/.cursor/agents/` |
-| Windsurf | | | `~/.codeium/windsurf/memories/`, `~/.windsurf/rules/` | |
+| Windsurf | `~/.codeium/windsurf/skills/` | | `~/.codeium/windsurf/memories/`, `~/.windsurf/rules/` | |
 | Codex | `~/.codex/skills/` | `~/.codex/prompts/` | `~/.codex/memories/` | `~/.codex/agents/` |
 | Copilot | `~/.copilot/skills/` | | | |
 | Amp | `$XDG_CONFIG/amp/skills/` | | | |
 | OpenCode | `$XDG_CONFIG/opencode/skills/` | | | |
+| Cline | detection only | | | |
+| Roo Code | `~/.roo/skills/` | | | |
+| Kilo Code | `~/.kilocode/skills/` | | | |
+| Continue | `~/.continue/skills/` | | | |
+| OpenHands | `~/.openhands/skills/` | | | |
+| Goose | `$XDG_CONFIG/goose/skills/` | | | |
 | Pi | `~/.pi/agent/skills/` | | | |
 | Antigravity | `~/.gemini/antigravity/skills/` | | | |
 | Global | `~/.agents/skills/` | | | |
@@ -69,7 +75,7 @@ Desktop only (macOS, Windows, Linux) — reads files outside your vault.
 
 ### What is Agentfiles?
 
-An AI skills manager for Obsidian. Browse, create, and manage skills, commands, and agents across 12 coding agents, all from your vault. Full docs: [agentfiles.crafter.run/docs](https://agentfiles.crafter.run/docs).
+An AI skills manager for Obsidian. Browse, create, and manage skills, commands, and agents across 17 coding agents, all from your vault. Full docs: [agentfiles.crafter.run/docs](https://agentfiles.crafter.run/docs).
 
 ### What can I do with Agentfiles?
 
@@ -77,7 +83,7 @@ See [What it does](#what-it-does) above. Full feature list and screenshots: [age
 
 ### What tools are supported?
 
-See [Supported tools](#supported-tools) above: 12 tools including Claude Code, Cursor, Codex, Windsurf, Copilot, Amp, OpenCode, Pi, Antigravity, Claude Desktop, Aider, and a global `~/.agents/skills/` directory.
+See [Supported tools](#supported-tools) above: 17 tools including Claude Code, Cursor, Codex, Windsurf, Copilot, Amp, OpenCode, Cline, Roo Code, Kilo Code, Continue, OpenHands, Goose, Pi, Antigravity, Claude Desktop, Aider, and a global `~/.agents/skills/` directory.
 
 ### How do I install Agentfiles?
 

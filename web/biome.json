@@ -7,7 +7,13 @@
 	},
 	"files": {
 		"ignoreUnknown": true,
-		"includes": ["**", "!node_modules", "!.next", "!public"]
+		"includes": [
+			"**",
+			"!node_modules",
+			"!.next",
+			"!public",
+			"!app/tools-meta.generated.ts"
+		]
 	},
 	"formatter": {
 		"enabled": true,
