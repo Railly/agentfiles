@@ -105,6 +105,7 @@ export class SidebarPanel {
 			{ label: "Commands", icon: "terminal", type: "command" },
 			{ label: "Agents", icon: "bot", type: "agent" },
 			{ label: "Rules", icon: "scroll", type: "rule" },
+			{ label: "Memories", icon: "database", type: "memory" },
 		];
 
 		const items = types

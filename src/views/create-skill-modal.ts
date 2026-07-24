@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, writeFileSync } from "fs";
 import { join } from "path";
 import { TOOL_CONFIGS } from "../tool-configs";
 import { TOOL_SVGS, renderToolIcon } from "../tool-icons";
+import { scaffoldContent, scaffoldExtension } from "../scaffolds";
 import type { ToolConfig, SkillPath } from "../types";
 
 interface ToolOption {
@@ -16,7 +17,6 @@ function getToolOptions(): ToolOption[] {
 		if (!tool.isInstalled()) continue;
 		const paths: { sp: SkillPath; label: string }[] = [];
 		for (const sp of [...tool.paths, ...tool.agentPaths]) {
-			if (sp.type === "rule" || sp.type === "memory") continue;
 			paths.push({ sp, label: sp.type });
 		}
 		if (paths.length > 0) options.push({ tool, paths });
@@ -28,6 +28,8 @@ const TYPE_ICONS: Record<string, string> = {
 	skill: "sparkles",
 	command: "terminal",
 	agent: "bot",
+	rule: "scroll",
+	memory: "database",
 };
 
 export class CreateSkillModal extends Modal {
@@ -187,34 +189,26 @@ export class CreateSkillModal extends Modal {
 			}
 			mkdirSync(dir, { recursive: true });
 			filePath = join(dir, "SKILL.md");
-			writeFileSync(filePath, [
-				"---",
-				`name: ${this.name}`,
-				'description: ""',
-				"---",
-				"",
-				`# ${this.name}`,
-				"",
-				"## Instructions",
-				"",
-				"",
-			].join("\n"), "utf-8");
+			writeFileSync(filePath, scaffoldContent({
+				name: this.name,
+				type: sp.type,
+				directory: true,
+			}), "utf-8");
 		} else {
 			if (!existsSync(sp.baseDir)) {
 				mkdirSync(sp.baseDir, { recursive: true });
 			}
-			filePath = join(sp.baseDir, `${slug}.md`);
+			const extension = scaffoldExtension(sp.type, sp.pattern === "mdc");
+			filePath = join(sp.baseDir, `${slug}${extension}`);
 			if (existsSync(filePath)) {
-				new Notice(`Already exists: ${slug}.md`);
+				new Notice(`Already exists: ${slug}${extension}`);
 				return;
 			}
-			writeFileSync(filePath, [
-				"---",
-				'description: ""',
-				"---",
-				"",
-				"",
-			].join("\n"), "utf-8");
+			writeFileSync(filePath, scaffoldContent({
+				name: this.name,
+				type: sp.type,
+				directory: false,
+			}), "utf-8");
 		}
 
 		new Notice(`Created ${this.name}`);

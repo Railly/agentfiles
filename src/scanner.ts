@@ -177,6 +177,16 @@ function parseSkillFile(
 			typeof frontmatter.description === "string"
 				? frontmatter.description
 				: "";
+		const globs =
+			typeof frontmatter.globs === "string"
+				? frontmatter.globs
+				: Array.isArray(frontmatter.globs)
+					? frontmatter.globs.join(",")
+					: undefined;
+		const alwaysApply =
+			typeof frontmatter.alwaysApply === "boolean"
+				? frontmatter.alwaysApply
+				: undefined;
 
 		let realPath: string;
 		try {
@@ -196,6 +206,8 @@ function parseSkillFile(
 			dirPath: join(filePath, ".."),
 			content: raw,
 			frontmatter,
+			globs,
+			alwaysApply,
 			lastModified: stat.mtimeMs,
 			fileSize: stat.size,
 			isFavorite: false,

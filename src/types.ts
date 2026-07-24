@@ -29,6 +29,8 @@ export interface SkillItem {
 	dirPath: string;
 	content: string;
 	frontmatter: Record<string, unknown>;
+	globs?: string;
+	alwaysApply?: boolean;
 	lastModified: number;
 	fileSize: number;
 	isFavorite: boolean;
