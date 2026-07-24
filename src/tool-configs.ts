@@ -131,7 +131,7 @@ export const TOOL_CONFIGS: ToolConfig[] = [
 			{
 				baseDir: join(HOME, ".cursor", "rules"),
 				type: "rule",
-				pattern: "flat-md",
+				pattern: "mdc",
 			},
 		],
 		agentPaths: [
