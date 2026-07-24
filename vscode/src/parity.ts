@@ -13,6 +13,7 @@ import {
 	VALID_AGENTS,
 } from "../../src/marketplace";
 import { formatLastUsed, getSkillTraces, getSkillkitStats, isSkillkitAvailable } from "../../src/skillkit";
+import { scaffoldContent, scaffoldExtension } from "../../src/scaffolds";
 import { TOOL_CONFIGS } from "../../src/tool-configs";
 import type { SkillItem } from "../../src/types";
 
@@ -198,15 +199,24 @@ export async function createSkillFlow(onCreated: () => Promise<void>): Promise<v
 		}
 		mkdirSync(dir, { recursive: true });
 		filePath = join(dir, "SKILL.md");
-		writeFileSync(filePath, ["---", `name: ${name}`, 'description: ""', "---", "", `# ${name}`, "", "## Instructions", "", ""].join("\n"), "utf-8");
+		writeFileSync(filePath, scaffoldContent({
+			name,
+			type: sp.type,
+			directory: true,
+		}), "utf-8");
 	} else {
 		if (!existsSync(sp.baseDir)) mkdirSync(sp.baseDir, { recursive: true });
-		filePath = join(sp.baseDir, `${slug}.md`);
+		const extension = scaffoldExtension(sp.type, sp.pattern === "mdc");
+		filePath = join(sp.baseDir, `${slug}${extension}`);
 		if (existsSync(filePath)) {
-			vscode.window.showErrorMessage(`Already exists: ${slug}.md`);
+			vscode.window.showErrorMessage(`Already exists: ${slug}${extension}`);
 			return;
 		}
-		writeFileSync(filePath, ["---", 'description: ""', "---", "", `# ${name}`, ""].join("\n"), "utf-8");
+		writeFileSync(filePath, scaffoldContent({
+			name,
+			type: sp.type,
+			directory: false,
+		}), "utf-8");
 	}
 
 	await vscode.window.showTextDocument(vscode.Uri.file(filePath));
