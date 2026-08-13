@@ -10,16 +10,8 @@ import { homedir } from "os";
 import { parseYaml } from "obsidian";
 import { createHash } from "crypto";
 import { TOOL_CONFIGS, clearInstallCache } from "./tool-configs";
+import { isScannableMarkdownFile } from "./scanner-ignore";
 import type { SkillItem, SkillPath, SkillType, NamingMode, ScanPattern, ChopsSettings, ToolConfig } from "./types";
-
-const IGNORED_FILES = new Set([
-	"readme.md",
-	"license",
-	"license.md",
-	"changelog.md",
-	".ds_store",
-	"thumbs.db",
-]);
 
 function hashPath(p: string): string {
 	return createHash("sha256").update(p).digest("hex").slice(0, 12);
@@ -115,9 +107,7 @@ function scanFlatMd(
 				if (item) items.push(item);
 				continue;
 			}
-			const mdFiles = readdirSync(fullPath).filter(
-				(f) => f.endsWith(".md") && !IGNORED_FILES.has(f.toLowerCase())
-			);
+			const mdFiles = readdirSync(fullPath).filter(isScannableMarkdownFile);
 			const preferred =
 				mdFiles.find(
 					(f) => f.toLowerCase() === `${entry.name.toLowerCase()}.md`
@@ -135,8 +125,7 @@ function scanFlatMd(
 			continue;
 		}
 
-		const fname = entry.name.toLowerCase();
-		if (!fname.endsWith(".md") || IGNORED_FILES.has(fname)) continue;
+		if (!isScannableMarkdownFile(entry.name)) continue;
 		const item = parseSkillFile(fullPath, type, toolId, "flat-md", namingMode);
 		if (item) items.push(item);
 	}
