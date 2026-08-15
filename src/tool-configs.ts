@@ -2,6 +2,7 @@ import { homedir, platform } from "os";
 import { existsSync, readdirSync } from "fs";
 import { join } from "path";
 import type { ToolConfig } from "./types";
+import { getPackageManagerBinDirs } from "./skillkit";
 
 const HOME = homedir();
 const IS_WIN = platform() === "win32";
@@ -36,7 +37,7 @@ function appExists(name: string): boolean {
 	);
 }
 
-function cliExists(name: string): boolean {
+export function cliExists(name: string): boolean {
 	const names = IS_WIN ? [`${name}.cmd`, `${name}.exe`, name] : [name];
 	const dirs: string[] = [];
 	if (IS_WIN) {
@@ -51,6 +52,7 @@ function cliExists(name: string): boolean {
 			"/usr/local/bin",
 			"/opt/homebrew/bin",
 			join(HOME, ".local", "bin"),
+			...getPackageManagerBinDirs(),
 		);
 	}
 	for (const dir of dirs) {

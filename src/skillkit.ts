@@ -27,6 +27,16 @@ const IS_WIN = platform() === "win32";
 const DB_PATH = join(HOME, ".skillkit", "analytics.db");
 const BIN_NAMES = IS_WIN ? ["skillkit.cmd", "skillkit.exe", "skillkit"] : ["skillkit"];
 
+export function getPackageManagerBinDirs(home = HOME): string[] {
+	return [
+		join(home, ".bun", "bin"), join(home, ".local", "share", "mise", "shims"),
+		join(home, ".local", "share", "pnpm"), join(home, ".volta", "bin"),
+		join(home, ".yarn", "bin"), join(home, ".config", "yarn", "global", "node_modules", ".bin"),
+		join(home, ".fnm", "aliases", "default", "bin"), join(home, ".asdf", "shims"),
+		join(home, ".proto", "bin"),
+	];
+}
+
 function buildPath(): string {
 	const extra: string[] = [];
 	if (IS_WIN) {
@@ -100,15 +110,7 @@ function findSkillkitBin(): string | null {
 			"/usr/local/bin",
 			"/opt/homebrew/bin",
 			join(HOME, ".local", "bin"),
-			join(HOME, ".bun", "bin"),
-			join(HOME, ".local", "share", "mise", "shims"),
-			join(HOME, ".local", "share", "pnpm"),                              // pnpm global bin
-			join(HOME, ".volta", "bin"),                                          // Volta
-			join(HOME, ".yarn", "bin"),                                           // Yarn classic
-			join(HOME, ".config", "yarn", "global", "node_modules", ".bin"),      // Yarn modern
-			join(HOME, ".fnm", "aliases", "default", "bin"),                      // fnm
-			join(HOME, ".asdf", "shims"),                                         // asdf
-			join(HOME, ".proto", "bin"),                                          // proto
+			...getPackageManagerBinDirs(),
 		);
 	}
 	for (const dir of searchDirs) {
