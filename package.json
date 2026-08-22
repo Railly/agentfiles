@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "node esbuild.config.mjs",
     "build": "node esbuild.config.mjs production",
-    "lint": "eslint src/"
+    "lint": "eslint src/",
+    "test": "bun test"
   },
   "devDependencies": {
     "@codemirror/autocomplete": "^6.20.1",
