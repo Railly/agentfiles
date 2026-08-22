@@ -1,7 +1,8 @@
-import { execSync, exec } from "child_process";
+import { execFile, execFileSync } from "child_process";
 import { existsSync, readdirSync } from "fs";
 import { join, delimiter } from "path";
 import { homedir, platform } from "os";
+import { areSafeCommandArguments, isSafeSkillName } from "./command-safety";
 
 const BUILTIN_TOOL_NAMES_PLUGIN = new Set([
 	"Read", "Write", "Edit", "MultiEdit", "Bash", "Glob", "Grep",
@@ -84,7 +85,7 @@ function buildPath(): string {
 
 function isCrafterSkillkit(binPath: string): boolean {
 	try {
-		const out = execSync(`"${binPath}" help`, {
+		const out = execFileSync(binPath, ["help"], {
 			encoding: "utf-8",
 			timeout: 5000,
 			env: { ...process.env, NO_COLOR: "1", PATH: buildPath() },
@@ -154,7 +155,7 @@ function findSkillkitBin(): string | null {
 		];
 		for (const args of dynamicCmds) {
 			try {
-				const dir = execSync(args.join(" "), {
+				const dir = execFileSync(args[0], args.slice(1), {
 					encoding: "utf-8",
 					timeout: 5000,
 					stdio: ["pipe", "pipe", "pipe"],
@@ -192,11 +193,11 @@ export function isSkillkitAvailable(): boolean {
 	return getSkillkitBin() !== null || existsSync(DB_PATH);
 }
 
-export function runSkillkitJson(cmd: string): Record<string, unknown> | unknown[] | null {
+export function runSkillkitJson(args: string[]): Record<string, unknown> | unknown[] | null {
 	const bin = getSkillkitBin();
-	if (!bin) return null;
+	if (!bin || !areSafeCommandArguments(args)) return null;
 	try {
-		const out = execSync(`${bin} ${cmd} --json`, {
+		const out = execFileSync(bin, [...args, "--json"], {
 			encoding: "utf-8",
 			timeout: 15000,
 			env: { ...process.env, NO_COLOR: "1", PATH: buildPath() },
@@ -215,11 +216,11 @@ function parseJsonOutput(out: string): Record<string, unknown> | unknown[] | nul
 	return JSON.parse(out.slice(start)) as Record<string, unknown> | unknown[];
 }
 
-export function runSkillkitJsonAsync(cmd: string): Promise<Record<string, unknown> | unknown[] | null> {
+export function runSkillkitJsonAsync(args: string[]): Promise<Record<string, unknown> | unknown[] | null> {
 	const bin = getSkillkitBin();
-	if (!bin) return Promise.resolve(null);
+	if (!bin || !areSafeCommandArguments(args)) return Promise.resolve(null);
 	return new Promise((resolve) => {
-		exec(`${bin} ${cmd} --json`, {
+		execFile(bin, [...args, "--json"], {
 			encoding: "utf-8",
 			timeout: 15000,
 			env: { ...process.env, NO_COLOR: "1", PATH: buildPath() },
@@ -236,7 +237,7 @@ export function getSkillkitStats(): Map<string, SkillkitStats> {
 	const stats = new Map<string, SkillkitStats>();
 	if (!isSkillkitAvailable()) return stats;
 
-	const data = runSkillkitJson("stats") as {
+	const data = runSkillkitJson(["stats"]) as {
 		top_skills: { name: string; total: number; daily: { date: string; count: number }[] }[];
 	} | null;
 
@@ -274,7 +275,7 @@ export function getSkillkitStatsWithDaily(): Map<string, SkillkitStatsWithDaily>
 	const stats = new Map<string, SkillkitStatsWithDaily>();
 	if (!isSkillkitAvailable()) return stats;
 
-	const data = runSkillkitJson("stats") as {
+	const data = runSkillkitJson(["stats"]) as {
 		top_skills: { name: string; total: number; daily: { date: string; count: number }[] }[];
 	} | null;
 
@@ -307,7 +308,7 @@ export function getSkillConflicts(): Map<string, { skillName: string; similarity
 	const conflicts = new Map<string, { skillName: string; similarity: number }[]>();
 	if (!isSkillkitAvailable()) return conflicts;
 
-	const data = runSkillkitJson("conflicts --dry-run") as {
+	const data = runSkillkitJson(["conflicts", "--dry-run"]) as {
 		pairs?: { skill_a: string; skill_b: string; similarity: number }[];
 	} | null;
 
@@ -323,9 +324,9 @@ export function getSkillConflicts(): Map<string, { skillName: string; similarity
 }
 
 export function getSkillTraces(skillName: string): { traceId: string; timestamp: string; tokens: number; cost: number; duration: number; model: string }[] {
-	if (!isSkillkitAvailable()) return [];
+	if (!isSkillkitAvailable() || !isSafeSkillName(skillName)) return [];
 
-	const data = runSkillkitJson(`trace --list --skill ${skillName} --limit 5`) as {
+	const data = runSkillkitJson(["trace", "--list", "--skill", skillName, "--limit", "5"]) as {
 		trace_id: string; timestamp: string; tokens_total: number; cost_estimate: number; duration_ms: number; model: string;
 	}[] | null;
 
@@ -344,7 +345,7 @@ export function getSkillTraces(skillName: string): { traceId: string; timestamp:
 export function getSkillWarnings(): { oversized: { name: string; lines: number }[]; longDesc: { name: string; chars: number }[] } {
 	if (!isSkillkitAvailable()) return { oversized: [], longDesc: [] };
 
-	const data = runSkillkitJson("health") as {
+	const data = runSkillkitJson(["health"]) as {
 		warnings?: { oversized: { name: string; lines: number }[]; long_descriptions: { name: string; chars: number }[] };
 	} | null;
 
@@ -359,7 +360,7 @@ export async function getSkillkitStatsWithDailyAsync(): Promise<Map<string, Skil
 	const stats = new Map<string, SkillkitStatsWithDaily>();
 	if (!isSkillkitAvailable()) return stats;
 
-	const data = await runSkillkitJsonAsync("stats") as {
+	const data = await runSkillkitJsonAsync(["stats"]) as {
 		top_skills: { name: string; total: number; daily: { date: string; count: number }[] }[];
 	} | null;
 
@@ -392,7 +393,7 @@ export async function getSkillConflictsAsync(): Promise<Map<string, { skillName:
 	const conflicts = new Map<string, { skillName: string; similarity: number }[]>();
 	if (!isSkillkitAvailable()) return conflicts;
 
-	const data = await runSkillkitJsonAsync("conflicts --dry-run") as {
+	const data = await runSkillkitJsonAsync(["conflicts", "--dry-run"]) as {
 		pairs?: { skill_a: string; skill_b: string; similarity: number }[];
 	} | null;
 
@@ -410,7 +411,7 @@ export async function getSkillConflictsAsync(): Promise<Map<string, { skillName:
 export async function getSkillWarningsAsync(): Promise<{ oversized: { name: string; lines: number }[]; longDesc: { name: string; chars: number }[] }> {
 	if (!isSkillkitAvailable()) return { oversized: [], longDesc: [] };
 
-	const data = await runSkillkitJsonAsync("health") as {
+	const data = await runSkillkitJsonAsync(["health"]) as {
 		warnings?: { oversized: { name: string; lines: number }[]; long_descriptions: { name: string; chars: number }[] };
 	} | null;
 
@@ -421,11 +422,12 @@ export async function getSkillWarningsAsync(): Promise<{ oversized: { name: stri
 	};
 }
 
-export function runSkillkitAction(cmd: string): { success: boolean; output: string } {
+export function runSkillkitAction(args: string[]): { success: boolean; output: string } {
 	const bin = getSkillkitBin();
 	if (!bin) return { success: false, output: "skillkit not found" };
+	if (!areSafeCommandArguments(args)) return { success: false, output: "Invalid skillkit arguments" };
 	try {
-		const out = execSync(`${bin} ${cmd}`, {
+		const out = execFileSync(bin, args, {
 			encoding: "utf-8",
 			timeout: 30000,
 			env: { ...process.env, NO_COLOR: "1", PATH: buildPath() },
