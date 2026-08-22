@@ -1,8 +1,14 @@
-import { execSync, exec } from "child_process";
+import { execFile, execFileSync } from "child_process";
 import { existsSync, readFileSync, readdirSync, rmSync, writeFileSync } from "fs";
 import { join, delimiter } from "path";
 import { homedir, platform } from "os";
 import { requestUrl } from "obsidian";
+import {
+	areSafeCommandArguments,
+	isSafeMarketplaceSource,
+	isSafeSkillName,
+	resolveContainedSkillPath,
+} from "./command-safety";
 
 const HOME = homedir();
 const IS_WIN = platform() === "win32";
@@ -40,10 +46,12 @@ export async function searchSkills(query: string): Promise<MarketplaceSkill[]> {
 		const data = res.json as SearchApiResponse;
 		if (!data.skills) return [];
 		const installed = getInstalledNames();
-		return data.skills.map((s) => ({
-			...s,
-			installed: installed.has(s.name),
-		}));
+		return data.skills
+			.filter((s) => isSafeMarketplaceSource(s.source) && isSafeSkillName(s.name))
+			.map((s) => ({
+				...s,
+				installed: installed.has(s.name),
+			}));
 	} catch { /* empty */
 		return [];
 	}
@@ -60,6 +68,7 @@ interface GitHubTreeResponse {
 }
 
 async function getRepoTree(source: string): Promise<{ branch: string; files: string[] }> {
+	if (!isSafeMarketplaceSource(source)) throw new Error("Invalid marketplace source");
 	const cached = treeCache.get(source);
 	if (cached) return cached;
 
@@ -99,6 +108,7 @@ function buildCandidateNames(skillName: string, skillId: string, source: string)
 }
 
 export async function fetchSkillContent(source: string, skillName: string, skillId: string): Promise<string | null> {
+	if (!isSafeMarketplaceSource(source) || !isSafeSkillName(skillName)) return null;
 	try {
 		const { branch, files } = await getRepoTree(source);
 		const candidates = buildCandidateNames(skillName, skillId, source);
@@ -216,6 +226,24 @@ export const VALID_AGENTS: { id: string; label: string }[] = [
 	{ id: "replit", label: "Replit" },
 ];
 
+const VALID_AGENT_IDS = new Set(VALID_AGENTS.map(({ id }) => id));
+
+function buildInstallArgs(
+	source: string,
+	agents: string[],
+	options: { globalInstall?: boolean; skillName?: string },
+): string[] | null {
+	if (!isSafeMarketplaceSource(source)) return null;
+	if (agents.some((agent) => !VALID_AGENT_IDS.has(agent))) return null;
+	if (options.skillName && !isSafeSkillName(options.skillName)) return null;
+
+	const args = ["skills", "add", source, "-a", ...(agents.length > 0 ? agents : ["*"])];
+	if (options.globalInstall) args.push("-g");
+	if (options.skillName) args.push("-s", options.skillName);
+	args.push("-y");
+	return areSafeCommandArguments(args) ? args : null;
+}
+
 export const TOOL_TO_AGENT: Record<string, string> = {
 	"claude-code": "claude-code",
 	"cursor": "cursor",
@@ -242,13 +270,11 @@ export function installSkill(
 	agents: string[],
 	options: { runner?: "auto" | "npx" | "bunx"; globalInstall?: boolean; skillName?: string } = {}
 ): { success: boolean; output: string } {
-	const agentFlag = agents.length > 0 ? `-a ${agents.join(" ")}` : "-a '*'";
-	const globalFlag = options.globalInstall ? "-g" : "";
-	const skillFlag = options.skillName ? `-s ${options.skillName}` : "";
+	const args = buildInstallArgs(source, agents, options);
+	if (!args) return { success: false, output: "Invalid marketplace install request" };
 	const resolvedRunner = getRunner(options.runner || "auto");
-	const cmd = `${resolvedRunner} skills add ${source} ${agentFlag} ${globalFlag} ${skillFlag} -y`.replace(/\s+/g, " ").trim();
 	try {
-		const out = execSync(cmd, {
+		const out = execFileSync(resolvedRunner, args, {
 			encoding: "utf-8",
 			timeout: 120000,
 			env: { ...process.env, PATH: buildPath(), NO_COLOR: "1" },
@@ -298,7 +324,8 @@ const AGENT_SKILL_DIRS = [
 
 function cleanupCopies(skillName: string): void {
 	for (const dir of AGENT_SKILL_DIRS) {
-		const skillPath = join(dir, skillName);
+		const skillPath = resolveContainedSkillPath(dir, skillName);
+		if (!skillPath) return;
 		if (existsSync(skillPath)) {
 			try {
 				rmSync(skillPath, { recursive: true, force: true });
@@ -309,6 +336,7 @@ function cleanupCopies(skillName: string): void {
 }
 
 function cleanLockFile(skillName: string): void {
+	if (!isSafeSkillName(skillName)) return;
 	const lockPath = join(HOME, ".agents", ".skill-lock.json");
 	if (!existsSync(lockPath)) return;
 	try {
@@ -321,12 +349,13 @@ function cleanLockFile(skillName: string): void {
 }
 
 export function removeSkill(skillName: string, runner: "auto" | "npx" | "bunx" = "auto"): { success: boolean; output: string } {
+	if (!isSafeSkillName(skillName)) return { success: false, output: "Invalid skill name" };
 	const resolvedRunner = getRunner(runner);
-	const cmd = `${resolvedRunner} skills remove ${skillName} -y`;
+	const args = ["skills", "remove", skillName, "-y"];
 	let cliSuccess = false;
 	let output = "";
 	try {
-		output = execSync(cmd, {
+		output = execFileSync(resolvedRunner, args, {
 			encoding: "utf-8",
 			timeout: 30000,
 			env: { ...process.env, PATH: buildPath(), NO_COLOR: "1" },
@@ -353,9 +382,8 @@ export function removeSkill(skillName: string, runner: "auto" | "npx" | "bunx" =
 
 export function updateAllSkills(runner: "auto" | "npx" | "bunx" = "auto"): { success: boolean; output: string; count: number } {
 	const resolvedRunner = getRunner(runner);
-	const cmd = `${resolvedRunner} skills update`;
 	try {
-		const out = execSync(cmd, {
+		const out = execFileSync(resolvedRunner, ["skills", "update"], {
 			encoding: "utf-8",
 			timeout: 120000,
 			env: { ...process.env, PATH: buildPath(), NO_COLOR: "1" },
@@ -385,9 +413,12 @@ export function refreshInstalledStatus(skills: MarketplaceSkill[]): MarketplaceS
 	return skills;
 }
 
-function execAsync(cmd: string, timeout = 120000): Promise<{ success: boolean; output: string }> {
+function execAsync(file: string, args: string[], timeout = 120000): Promise<{ success: boolean; output: string }> {
+	if (!areSafeCommandArguments(args)) {
+		return Promise.resolve({ success: false, output: "Invalid command arguments" });
+	}
 	return new Promise((resolve) => {
-		exec(cmd, {
+		execFile(file, args, {
 			encoding: "utf-8",
 			timeout,
 			env: { ...process.env, PATH: buildPath(), NO_COLOR: "1" },
@@ -408,26 +439,23 @@ export async function installSkillAsync(
 	agents: string[],
 	options: { runner?: "auto" | "npx" | "bunx"; globalInstall?: boolean; skillName?: string } = {}
 ): Promise<{ success: boolean; output: string }> {
-	const agentFlag = agents.length > 0 ? `-a ${agents.join(" ")}` : "-a '*'";
-	const globalFlag = options.globalInstall ? "-g" : "";
-	const skillFlag = options.skillName ? `-s ${options.skillName}` : "";
+	const args = buildInstallArgs(source, agents, options);
+	if (!args) return { success: false, output: "Invalid marketplace install request" };
 	const resolvedRunner = getRunner(options.runner || "auto");
-	const cmd = `${resolvedRunner} skills add ${source} ${agentFlag} ${globalFlag} ${skillFlag} -y`.replace(/\s+/g, " ").trim();
-	return execAsync(cmd);
+	return execAsync(resolvedRunner, args);
 }
 
 export async function removeSkillAsync(skillName: string, runner: "auto" | "npx" | "bunx" = "auto"): Promise<{ success: boolean; output: string }> {
+	if (!isSafeSkillName(skillName)) return { success: false, output: "Invalid skill name" };
 	const resolvedRunner = getRunner(runner);
-	const cmd = `${resolvedRunner} skills remove ${skillName} -y`;
-	const result = await execAsync(cmd, 30000);
+	const result = await execAsync(resolvedRunner, ["skills", "remove", skillName, "-y"], 30000);
 	cleanupCopies(skillName);
 	return { success: true, output: result.output || `Cleaned ${skillName}` };
 }
 
 export async function updateAllSkillsAsync(runner: "auto" | "npx" | "bunx" = "auto"): Promise<{ success: boolean; output: string; count: number }> {
 	const resolvedRunner = getRunner(runner);
-	const cmd = `${resolvedRunner} skills update`;
-	const result = await execAsync(cmd);
+	const result = await execAsync(resolvedRunner, ["skills", "update"]);
 	const match = result.output.match(/Updated (\d+) skill/);
 	return { ...result, count: match ? parseInt(match[1]) : 0 };
 }

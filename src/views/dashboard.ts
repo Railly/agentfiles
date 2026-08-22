@@ -79,10 +79,10 @@ interface DashboardData {
 }
 
 function loadData(): DashboardData {
-	const stats = runSkillkitJson("stats") as StatsJson | null;
-	const health = runSkillkitJson("health") as HealthJson | null;
-	const burnArr = runSkillkitJson("burn") as BurnAgent[] | null;
-	const context = runSkillkitJson("context") as ContextJson | null;
+	const stats = runSkillkitJson(["stats"]) as StatsJson | null;
+	const health = runSkillkitJson(["health"]) as HealthJson | null;
+	const burnArr = runSkillkitJson(["burn"]) as BurnAgent[] | null;
+	const context = runSkillkitJson(["context"]) as ContextJson | null;
 
 	return {
 		stats,
@@ -206,7 +206,7 @@ export class DashboardPanel {
 			scanBtn.setText("Scanning...");
 			scanBtn.disabled = true;
 			window.setTimeout(() => {
-				const result = runSkillkitAction("scan");
+				const result = runSkillkitAction(["scan"]);
 				if (result.success) {
 					new Notice("Scan complete", 5000);
 					cachedData = null;
@@ -227,7 +227,7 @@ export class DashboardPanel {
 					pruneBtn.setText("Pruning...");
 					pruneBtn.disabled = true;
 					window.setTimeout(() => {
-						const result = runSkillkitAction("prune --yes");
+						const result = runSkillkitAction(["prune", "--yes"]);
 						if (result.success) {
 							new Notice("Pruned stale skills", 5000);
 							cachedData = null;
