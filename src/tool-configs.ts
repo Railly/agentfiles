@@ -74,7 +74,7 @@ export function cliExists(name: string): boolean {
 	return false;
 }
 
-const VSCODE_VARIANTS = ["Code", "Code - Insiders", "Cursor", "VSCodium", "Windsurf"];
+const VSCODE_VARIANTS = ["Code", "Code - Insiders", "Cursor", "Cursor Nightly", "VSCodium", "Windsurf", "Windsurf Next", "Trae", "Void", "Positron"];
 
 function vscodeExtensionStorageExists(extensionId: string): boolean {
 	let bases: string[];
