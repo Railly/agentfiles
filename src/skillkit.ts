@@ -96,7 +96,7 @@ function isCrafterSkillkit(binPath: string): boolean {
 	} catch { return false; }
 }
 
-function findSkillkitBin(): string | null {
+export function findSkillkitBin(): string | null {
 	const candidates: string[] = [];
 	const searchDirs: string[] = [];
 	if (IS_WIN) {
