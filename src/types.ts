@@ -84,7 +84,6 @@ export interface ChopsSettings {
 	namingMode: NamingMode;
 	projectScanEnabled: boolean;
 	projectsHomeDir: string;
-	packageRunner: "auto" | "npx" | "bunx";
 }
 
 // Conversation Explorer types
@@ -142,5 +141,4 @@ export const DEFAULT_SETTINGS: ChopsSettings = {
 	namingMode: "auto",
 	projectScanEnabled: true,
 	projectsHomeDir: "",
-	packageRunner: "auto",
 };

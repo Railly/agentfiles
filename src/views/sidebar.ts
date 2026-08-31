@@ -1,5 +1,6 @@
 import { setIcon } from "obsidian";
 import { openExternal } from "../utils/shell";
+import { getSkillkitCommand } from "../skillkit";
 import { TOOL_CONFIGS } from "../tool-configs";
 import { TOOL_SVGS, renderToolIcon } from "../tool-icons";
 import type { SkillStore } from "../store";
@@ -282,10 +283,10 @@ export class SidebarPanel {
 		cta.createDiv({ cls: "as-skillkit-title", text: "Unlock analytics" });
 		cta.createDiv({
 			cls: "as-skillkit-desc",
-			text: "Install skillkit to see usage stats, stale badges, and heavy skill warnings.",
+			text: "Create a local Skillkit snapshot to see usage stats, stale badges, and warnings.",
 		});
 		const cmd = cta.createDiv("as-skillkit-cmd");
-		cmd.createEl("code", { text: "npm i -g @crafter/skillkit" });
+		cmd.createEl("code").textContent = getSkillkitCommand(["scan"]);
 		const link = cta.createEl("a", {
 			cls: "as-skillkit-link",
 			text: "Learn more",

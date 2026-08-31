@@ -1,20 +1,25 @@
 import { describe, expect, mock, test } from "bun:test";
+import * as actualFs from "node:fs";
+import type { PathLike } from "node:fs";
+import * as actualOs from "node:os";
 import { join } from "path";
 
 const HOME = "/home/agentfiles-test";
+const actualExistsSync = actualFs.existsSync;
 let existsPredicate = (_path: string) => false;
 const existsSync = mock((path: unknown) =>
-	existsPredicate(String(path).replaceAll("\\", "/")),
+	existsPredicate(String(path).replaceAll("\\", "/")) || actualExistsSync(path as PathLike),
 );
 
 mock.module("os", () => ({
+	...actualOs,
 	homedir: () => HOME,
 	platform: () => "linux",
 }));
 
 mock.module("fs", () => ({
+	...actualFs,
 	existsSync,
-	readdirSync: () => [],
 }));
 
 const toolConfigs = await import("../src/tool-configs");

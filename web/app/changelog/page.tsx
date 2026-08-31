@@ -3,6 +3,25 @@ import { Nav } from "@/components/nav";
 
 const releases = [
 	{
+		version: "0.9.0",
+		date: "2026-08-31",
+		tag: null,
+		changes: [
+			{
+				type: "fix",
+				text: "Removed shell execution from the Obsidian plugin and VS Code extension",
+			},
+			{
+				type: "feat",
+				text: "Marketplace installs now resolve exact skill directories and download files pinned to a commit SHA",
+			},
+			{
+				type: "feat",
+				text: "Dashboard analytics now load through the native Skillkit snapshot API",
+			},
+		],
+	},
+	{
 		version: "0.7.4",
 		date: "2026-05-12",
 		tag: "latest",

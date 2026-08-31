@@ -38,7 +38,11 @@ async function installFromMarketplace(skill: MarketplaceSkill, onDone: () => Pro
 	await vscode.window.withProgress(
 		{ location: vscode.ProgressLocation.Notification, title: `Installing ${skill.source}...` },
 		async () => {
-			const result = await installSkillAsync(skill.source, agents, { skillName: skill.skillId });
+			const result = await installSkillAsync(skill.source, agents, {
+				projectRoot: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath,
+				skillName: skill.name,
+				skillId: skill.skillId,
+			});
 			if (result.success) {
 				vscode.window.showInformationMessage(`Installed ${skill.name}`);
 				await onDone();
@@ -50,6 +54,7 @@ async function installFromMarketplace(skill: MarketplaceSkill, onDone: () => Pro
 }
 
 export async function browseMarketplace(onInstalled: () => Promise<void>): Promise<void> {
+	const projectRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
 	const qp = vscode.window.createQuickPick<vscode.QuickPickItem & { skill: MarketplaceSkill }>();
 	qp.title = "agentfiles Marketplace (skills.sh)";
 	qp.placeholder = "Type to search skills, Enter to install";
@@ -65,7 +70,7 @@ export async function browseMarketplace(onInstalled: () => Promise<void>): Promi
 		}));
 
 	try {
-		qp.items = toItems(await getPopularSkills());
+		qp.items = toItems(await getPopularSkills(projectRoot));
 	} catch {
 		qp.items = [];
 	}
@@ -77,7 +82,7 @@ export async function browseMarketplace(onInstalled: () => Promise<void>): Promi
 		timer = setTimeout(async () => {
 			qp.busy = true;
 			try {
-				qp.items = toItems(value.trim() ? await searchSkills(value.trim()) : await getPopularSkills());
+				qp.items = toItems(value.trim() ? await searchSkills(value.trim(), projectRoot) : await getPopularSkills(projectRoot));
 			} catch {
 				qp.items = [];
 			}
@@ -226,7 +231,7 @@ export async function createSkillFlow(onCreated: () => Promise<void>): Promise<v
 export async function removeSkillFlow(item: SkillItem, onRemoved: () => Promise<void>): Promise<void> {
 	const confirm = await vscode.window.showWarningMessage(`Remove skill "${item.name}"?`, { modal: true }, "Remove");
 	if (confirm !== "Remove") return;
-	const result = await removeSkillAsync(item.name);
+	const result = await removeSkillAsync(item.name, vscode.workspace.workspaceFolders?.[0]?.uri.fsPath);
 	if (result.success) {
 		vscode.window.showInformationMessage(`Removed ${item.name}`);
 		await onRemoved();
@@ -240,7 +245,7 @@ export async function removeSkillFlowByName(onRemoved: () => Promise<void>): Pro
 	if (!name) return;
 	const confirm = await vscode.window.showWarningMessage(`Remove skill "${name}"?`, { modal: true }, "Remove");
 	if (confirm !== "Remove") return;
-	const result = await removeSkillAsync(name);
+	const result = await removeSkillAsync(name, vscode.workspace.workspaceFolders?.[0]?.uri.fsPath);
 	if (result.success) {
 		vscode.window.showInformationMessage(`Removed ${name}`);
 		await onRemoved();
@@ -253,7 +258,7 @@ export async function updateAllFlow(onDone: () => Promise<void>): Promise<void> 
 	await vscode.window.withProgress(
 		{ location: vscode.ProgressLocation.Notification, title: "Updating all skills..." },
 		async () => {
-			const result = await updateAllSkillsAsync();
+			const result = await updateAllSkillsAsync(vscode.workspace.workspaceFolders?.[0]?.uri.fsPath);
 			if (result.success) {
 				vscode.window.showInformationMessage(`Updated ${result.count} skills`);
 				await onDone();

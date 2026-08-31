@@ -1,32 +1,9 @@
 import { Events } from "obsidian";
-import { sep, join } from "path";
-import { existsSync, readFileSync, writeFileSync } from "fs";
-import { homedir } from "os";
+import { sep } from "path";
 import type { SkillItem, SidebarFilter, DeepSearchScope, ChopsSettings } from "./types";
 import { scanAll, getProjectName } from "./scanner";
-import { getSkillkitStatsWithDailyAsync, getSkillConflictsAsync, getSkillWarningsAsync, isSkillkitAvailable } from "./skillkit";
+import { getSkillkitStatsWithDaily, getSkillConflicts, getSkillWarnings, isSkillkitAvailable } from "./skillkit";
 import type { SkillkitStatsWithDaily } from "./skillkit";
-
-const ENRICH_CACHE = join(homedir(), ".skillkit", "enrichment-cache.json");
-
-interface EnrichmentData {
-	stats: Record<string, SkillkitStatsWithDaily>;
-	conflicts: Record<string, { skillName: string; similarity: number }[]>;
-	warnings: { oversized: { name: string; lines: number }[]; longDesc: { name: string; chars: number }[] };
-}
-
-function loadEnrichmentCache(): EnrichmentData | null {
-	if (!existsSync(ENRICH_CACHE)) return null;
-	try {
-		return JSON.parse(readFileSync(ENRICH_CACHE, "utf-8")) as EnrichmentData;
-	} catch { return null; }
-}
-
-function saveEnrichmentCache(data: EnrichmentData): void {
-	try {
-		writeFileSync(ENRICH_CACHE, JSON.stringify(data), "utf-8");
-	} catch { /* empty */ }
-}
 
 export class SkillStore extends Events {
 	private items: Map<string, SkillItem> = new Map();
@@ -106,45 +83,19 @@ export class SkillStore extends Events {
 		return isSkillkitAvailable();
 	}
 
-	private _enrichGeneration = 0;
-
 	refresh(settings: ChopsSettings): void {
 		this._projectsHomeDir = settings.projectsHomeDir;
 		this.items = scanAll(settings);
 		if (isSkillkitAvailable()) {
-			this.applyEnrichmentFromCache();
+			this.applyEnrichment(getSkillkitStatsWithDaily(), getSkillConflicts(), getSkillWarnings());
 		}
 		this.trigger("updated");
 	}
 
 	revalidate(): void {
 		if (!isSkillkitAvailable()) return;
-		void this.revalidateAsync();
-	}
-
-	private applyEnrichmentFromCache(): void {
-		const cached = loadEnrichmentCache();
-		if (!cached) return;
-		const stats = new Map(Object.entries(cached.stats));
-		const conflicts = new Map(Object.entries(cached.conflicts));
-		this.applyEnrichment(stats, conflicts, cached.warnings);
-	}
-
-	private async revalidateAsync(): Promise<void> {
-		const gen = ++this._enrichGeneration;
-		const [stats, conflicts, warnings] = await Promise.all([
-			getSkillkitStatsWithDailyAsync(),
-			getSkillConflictsAsync(),
-			getSkillWarningsAsync(),
-		]);
-		if (gen !== this._enrichGeneration) return;
-		this.applyEnrichment(stats, conflicts, warnings);
+		this.applyEnrichment(getSkillkitStatsWithDaily(), getSkillConflicts(), getSkillWarnings());
 		this.trigger("updated");
-		saveEnrichmentCache({
-			stats: Object.fromEntries(stats),
-			conflicts: Object.fromEntries(conflicts),
-			warnings,
-		});
 	}
 
 	private applyEnrichment(

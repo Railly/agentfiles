@@ -1,8 +1,10 @@
-import { execFile, execFileSync } from "child_process";
-import { existsSync, readdirSync } from "fs";
-import { join, delimiter } from "path";
-import { homedir, platform } from "os";
-import { areSafeCommandArguments, isSafeSkillName } from "./command-safety";
+import {
+	loadAgentfilesSnapshot,
+	type AgentfilesConflict,
+	type AgentfilesSnapshot,
+	type AgentfilesTrace,
+} from "@crafter/skillkit/agentfiles";
+import { isSafeSkillName } from "./command-safety";
 
 const BUILTIN_TOOL_NAMES_PLUGIN = new Set([
 	"Read", "Write", "Edit", "MultiEdit", "Bash", "Glob", "Grep",
@@ -23,162 +25,8 @@ function isRealSkillName(name: string): boolean {
 	return true;
 }
 
-const HOME = homedir();
-const IS_WIN = platform() === "win32";
-const DB_PATH = join(HOME, ".skillkit", "analytics.db");
-const BIN_NAMES = IS_WIN ? ["skillkit.cmd", "skillkit.exe", "skillkit"] : ["skillkit"];
-
-export function getPackageManagerBinDirs(home = HOME): string[] {
-	return [
-		join(home, ".bun", "bin"), join(home, ".local", "share", "mise", "shims"),
-		join(home, ".local", "share", "pnpm"), join(home, ".volta", "bin"),
-		join(home, ".yarn", "bin"), join(home, ".config", "yarn", "global", "node_modules", ".bin"),
-		join(home, ".fnm", "aliases", "default", "bin"), join(home, ".asdf", "shims"),
-		join(home, ".proto", "bin"),
-	];
-}
-
-function buildPath(): string {
-	const extra: string[] = [];
-	if (IS_WIN) {
-		const appData = process.env.APPDATA || join(HOME, "AppData", "Roaming");
-		extra.push(
-			join(appData, "npm"),
-			join(HOME, ".bun", "bin"),
-			join(HOME, "AppData", "Local", "npm"),
-		);
-	} else {
-		extra.push(
-			"/usr/local/bin",
-			"/opt/homebrew/bin",
-			join(HOME, ".local", "bin"),
-			join(HOME, ".bun", "bin"),
-			join(HOME, ".local", "share", "pnpm"),                              // pnpm global bin
-			join(HOME, ".volta", "bin"),                                          // Volta
-			join(HOME, ".yarn", "bin"),                                           // Yarn classic
-			join(HOME, ".config", "yarn", "global", "node_modules", ".bin"),      // Yarn modern
-			join(HOME, ".fnm", "aliases", "default", "bin"),                      // fnm
-			join(HOME, ".asdf", "shims"),                                         // asdf
-			join(HOME, ".proto", "bin"),                                          // proto
-		);
-	}
-	const nvmDir = IS_WIN
-		? join(HOME, "AppData", "Roaming", "nvm")
-		: join(HOME, ".nvm", "versions", "node");
-	try {
-		for (const d of readdirSync(nvmDir)) {
-			extra.push(IS_WIN ? join(nvmDir, d) : join(nvmDir, d, "bin"));
-		}
-	} catch { /* empty */ }
-	if (!IS_WIN) {
-		const miseDir = join(HOME, ".local", "share", "mise", "installs");
-		for (const runtime of ["node", "bun"]) {
-			try {
-				for (const d of readdirSync(join(miseDir, runtime))) {
-					extra.push(join(miseDir, runtime, d, "bin"));
-				}
-			} catch { /* empty */ }
-		}
-	}
-	return [...extra, process.env.PATH || ""].join(delimiter);
-}
-
-function isCrafterSkillkit(binPath: string): boolean {
-	try {
-		const out = execFileSync(binPath, ["help"], {
-			encoding: "utf-8",
-			timeout: 5000,
-			env: { ...process.env, NO_COLOR: "1", PATH: buildPath() },
-			stdio: ["pipe", "pipe", "pipe"],
-			shell: IS_WIN ? "cmd.exe" : undefined,
-		});
-		return out.includes("Analytics for AI agent skills");
-	} catch { return false; }
-}
-
-function findSkillkitBin(): string | null {
-	const candidates: string[] = [];
-	const searchDirs: string[] = [];
-	if (IS_WIN) {
-		const appData = process.env.APPDATA || join(HOME, "AppData", "Roaming");
-		searchDirs.push(
-			join(appData, "npm"),
-			join(HOME, ".bun", "bin"),
-			join(HOME, "AppData", "Local", "npm"),
-		);
-	} else {
-		searchDirs.push(
-			"/usr/local/bin",
-			"/opt/homebrew/bin",
-			join(HOME, ".local", "bin"),
-			...getPackageManagerBinDirs(),
-		);
-	}
-	for (const dir of searchDirs) {
-		for (const bin of BIN_NAMES) {
-			const p = join(dir, bin);
-			if (existsSync(p)) candidates.push(p);
-		}
-	}
-	const nvmDir = IS_WIN
-		? join(HOME, "AppData", "Roaming", "nvm")
-		: join(HOME, ".nvm", "versions", "node");
-	try {
-		for (const d of readdirSync(nvmDir)) {
-			const binDir = IS_WIN ? join(nvmDir, d) : join(nvmDir, d, "bin");
-			for (const bin of BIN_NAMES) {
-				const p = join(binDir, bin);
-				if (existsSync(p)) candidates.push(p);
-			}
-		}
-	} catch { /* empty */ }
-	if (!IS_WIN) {
-		const miseDir = join(HOME, ".local", "share", "mise", "installs");
-		for (const runtime of ["node", "bun"]) {
-			try {
-				for (const d of readdirSync(join(miseDir, runtime))) {
-					const p = join(miseDir, runtime, d, "bin", "skillkit");
-					if (existsSync(p)) candidates.push(p);
-				}
-			} catch { /* empty */ }
-		}
-	}
-	// Dynamic fallback: only runs when static paths found no candidates,
-	// so the common case stays zero-cost (no child processes spawned).
-	// Each command queries a package manager for its global bin directory.
-	// Returns immediately once a valid crafter skillkit binary is found.
-	if (candidates.length === 0 && !IS_WIN) {
-		const dynamicCmds = [
-			["pnpm", "bin", "-g"],    // pnpm global bin directory
-			["yarn", "global", "bin"], // yarn global bin directory
-			["npm", "bin", "-g"],      // npm global bin directory
-		];
-		for (const args of dynamicCmds) {
-			try {
-				const dir = execFileSync(args[0], args.slice(1), {
-					encoding: "utf-8",
-					timeout: 5000,
-					stdio: ["pipe", "pipe", "pipe"],
-				}).trim();
-				if (dir) {
-					for (const bin of BIN_NAMES) {
-						const p = join(dir, bin);
-						if (existsSync(p) && isCrafterSkillkit(p)) return p;
-					}
-				}
-			} catch { /* command not available — skip to next */ }
-		}
-	}
-	for (const c of candidates) {
-		if (isCrafterSkillkit(c)) return c;
-	}
-	return null;
-}
-
-let _bin: string | null | undefined;
-function getSkillkitBin(): string | null {
-	if (_bin === undefined) _bin = findSkillkitBin();
-	return _bin;
+function readSnapshot(): AgentfilesSnapshot | null {
+	return loadAgentfilesSnapshot();
 }
 
 export interface SkillkitStats {
@@ -189,112 +37,44 @@ export interface SkillkitStats {
 	isHeavy: boolean;
 }
 
-export function isSkillkitAvailable(): boolean {
-	return getSkillkitBin() !== null || existsSync(DB_PATH);
-}
-
-export function runSkillkitJson(args: string[]): Record<string, unknown> | unknown[] | null {
-	const bin = getSkillkitBin();
-	if (!bin || !areSafeCommandArguments(args)) return null;
-	try {
-		const out = execFileSync(bin, [...args, "--json"], {
-			encoding: "utf-8",
-			timeout: 15000,
-			env: { ...process.env, NO_COLOR: "1", PATH: buildPath() },
-			stdio: ["pipe", "pipe", "pipe"],
-			shell: IS_WIN ? "cmd.exe" : undefined,
-		}).trim();
-		return parseJsonOutput(out);
-	} catch { /* empty */ return null; }
-}
-
-function parseJsonOutput(out: string): Record<string, unknown> | unknown[] | null {
-	const jsonStart = out.indexOf("{");
-	const jsonStartArr = out.indexOf("[");
-	const start = jsonStart === -1 ? jsonStartArr : jsonStartArr === -1 ? jsonStart : Math.min(jsonStart, jsonStartArr);
-	if (start === -1) return null;
-	return JSON.parse(out.slice(start)) as Record<string, unknown> | unknown[];
-}
-
-export function runSkillkitJsonAsync(args: string[]): Promise<Record<string, unknown> | unknown[] | null> {
-	const bin = getSkillkitBin();
-	if (!bin || !areSafeCommandArguments(args)) return Promise.resolve(null);
-	return new Promise((resolve) => {
-		execFile(bin, [...args, "--json"], {
-			encoding: "utf-8",
-			timeout: 15000,
-			env: { ...process.env, NO_COLOR: "1", PATH: buildPath() },
-			shell: IS_WIN ? "cmd.exe" : undefined,
-		}, (error, stdout) => {
-			if (error) { resolve(null); return; }
-			try { resolve(parseJsonOutput(String(stdout).trim())); }
-			catch { resolve(null); }
-		});
-	});
-}
-
-export function getSkillkitStats(): Map<string, SkillkitStats> {
-	const stats = new Map<string, SkillkitStats>();
-	if (!isSkillkitAvailable()) return stats;
-
-	const data = runSkillkitJson(["stats"]) as {
-		top_skills: { name: string; total: number; daily: { date: string; count: number }[] }[];
-	} | null;
-
-	if (!data?.top_skills) return stats;
-
-	const now = Date.now();
-	for (const skill of data.top_skills) {
-		if (!isRealSkillName(skill.name)) continue;
-		const lastDay = skill.daily.length > 0
-			? skill.daily[skill.daily.length - 1]?.date
-			: null;
-		let daysSinceUsed: number | null = null;
-
-		if (lastDay) {
-			daysSinceUsed = Math.floor((now - new Date(lastDay).getTime()) / (1000 * 60 * 60 * 24));
-		}
-
-		stats.set(skill.name, {
-			uses: skill.total,
-			lastUsed: lastDay || null,
-			daysSinceUsed,
-			isStale: daysSinceUsed !== null && daysSinceUsed > 30,
-			isHeavy: false,
-		});
-	}
-
-	return stats;
-}
-
 export interface SkillkitStatsWithDaily extends SkillkitStats {
 	daily: { date: string; count: number }[];
 }
 
-export function getSkillkitStatsWithDaily(): Map<string, SkillkitStatsWithDaily> {
+export function isSkillkitAvailable(): boolean {
+	return readSnapshot() !== null;
+}
+
+export function getSkillkitSnapshotGeneratedAt(): string | null {
+	return readSnapshot()?.generatedAt ?? null;
+}
+
+export function runSkillkitJson(args: string[]): unknown {
+	const command = args[0];
+	if (command !== "stats" && command !== "health" && command !== "burn" && command !== "context") return null;
+	return readSnapshot()?.dashboard[command] ?? null;
+}
+
+export function runSkillkitJsonAsync(args: string[]): Promise<unknown> {
+	return Promise.resolve(runSkillkitJson(args));
+}
+
+function statsFromSnapshot(): Map<string, SkillkitStatsWithDaily> {
 	const stats = new Map<string, SkillkitStatsWithDaily>();
-	if (!isSkillkitAvailable()) return stats;
-
 	const data = runSkillkitJson(["stats"]) as {
-		top_skills: { name: string; total: number; daily: { date: string; count: number }[] }[];
+		top_skills?: { name: string; total: number; daily: { date: string; count: number }[] }[];
 	} | null;
-
 	if (!data?.top_skills) return stats;
-
 	const now = Date.now();
 	for (const skill of data.top_skills) {
 		if (!isRealSkillName(skill.name)) continue;
-		const lastDay = skill.daily.length > 0
-			? skill.daily[skill.daily.length - 1]?.date
+		const lastDay = skill.daily.at(-1)?.date ?? null;
+		const daysSinceUsed = lastDay
+			? Math.floor((now - new Date(lastDay).getTime()) / 86_400_000)
 			: null;
-		let daysSinceUsed: number | null = null;
-		if (lastDay) {
-			daysSinceUsed = Math.floor((now - new Date(lastDay).getTime()) / (1000 * 60 * 60 * 24));
-		}
-
 		stats.set(skill.name, {
 			uses: skill.total,
-			lastUsed: lastDay || null,
+			lastUsed: lastDay,
 			daysSinceUsed,
 			isStale: daysSinceUsed !== null && daysSinceUsed > 30,
 			isHeavy: false,
@@ -304,140 +84,54 @@ export function getSkillkitStatsWithDaily(): Map<string, SkillkitStatsWithDaily>
 	return stats;
 }
 
-export function getSkillConflicts(): Map<string, { skillName: string; similarity: number }[]> {
-	const conflicts = new Map<string, { skillName: string; similarity: number }[]>();
-	if (!isSkillkitAvailable()) return conflicts;
+export function getSkillkitStats(): Map<string, SkillkitStats> {
+	return statsFromSnapshot();
+}
 
-	const data = runSkillkitJson(["conflicts", "--dry-run"]) as {
-		pairs?: { skill_a: string; skill_b: string; similarity: number }[];
-	} | null;
+export function getSkillkitStatsWithDaily(): Map<string, SkillkitStatsWithDaily> {
+	return statsFromSnapshot();
+}
 
-	if (!data || !("pairs" in data)) return conflicts;
-
-	for (const pair of (data as { pairs: { skill_a: string; skill_b: string; similarity: number }[] }).pairs) {
-		if (!conflicts.has(pair.skill_a)) conflicts.set(pair.skill_a, []);
-		if (!conflicts.has(pair.skill_b)) conflicts.set(pair.skill_b, []);
-		conflicts.get(pair.skill_a)!.push({ skillName: pair.skill_b, similarity: pair.similarity });
-		conflicts.get(pair.skill_b)!.push({ skillName: pair.skill_a, similarity: pair.similarity });
+export function getSkillConflicts(): Map<string, AgentfilesConflict[]> {
+	const conflicts = new Map<string, AgentfilesConflict[]>();
+	const snapshot = readSnapshot();
+	if (!snapshot) return conflicts;
+	for (const [name, details] of Object.entries(snapshot.skills)) {
+		if (details.conflicts.length > 0) conflicts.set(name, details.conflicts);
 	}
 	return conflicts;
 }
 
-export function getSkillTraces(skillName: string): { traceId: string; timestamp: string; tokens: number; cost: number; duration: number; model: string }[] {
-	if (!isSkillkitAvailable() || !isSafeSkillName(skillName)) return [];
-
-	const data = runSkillkitJson(["trace", "--list", "--skill", skillName, "--limit", "5"]) as {
-		trace_id: string; timestamp: string; tokens_total: number; cost_estimate: number; duration_ms: number; model: string;
-	}[] | null;
-
-	if (!Array.isArray(data)) return [];
-
-	return data.map((t) => ({
-		traceId: t.trace_id,
-		timestamp: t.timestamp,
-		tokens: t.tokens_total,
-		cost: t.cost_estimate,
-		duration: t.duration_ms,
-		model: t.model || "unknown",
-	}));
+export function getSkillTraces(skillName: string): AgentfilesTrace[] {
+	if (!isSafeSkillName(skillName)) return [];
+	return readSnapshot()?.skills[skillName]?.traces ?? [];
 }
 
 export function getSkillWarnings(): { oversized: { name: string; lines: number }[]; longDesc: { name: string; chars: number }[] } {
-	if (!isSkillkitAvailable()) return { oversized: [], longDesc: [] };
-
 	const data = runSkillkitJson(["health"]) as {
-		warnings?: { oversized: { name: string; lines: number }[]; long_descriptions: { name: string; chars: number }[] };
+		warnings?: { oversized?: { name: string; lines: number }[]; long_descriptions?: { name: string; chars: number }[] };
 	} | null;
-
-	if (!data?.warnings) return { oversized: [], longDesc: [] };
 	return {
-		oversized: data.warnings.oversized || [],
-		longDesc: data.warnings.long_descriptions || [],
+		oversized: data?.warnings?.oversized ?? [],
+		longDesc: data?.warnings?.long_descriptions ?? [],
 	};
 }
 
-export async function getSkillkitStatsWithDailyAsync(): Promise<Map<string, SkillkitStatsWithDaily>> {
-	const stats = new Map<string, SkillkitStatsWithDaily>();
-	if (!isSkillkitAvailable()) return stats;
-
-	const data = await runSkillkitJsonAsync(["stats"]) as {
-		top_skills: { name: string; total: number; daily: { date: string; count: number }[] }[];
-	} | null;
-
-	if (!data?.top_skills) return stats;
-
-	const now = Date.now();
-	for (const skill of data.top_skills) {
-		if (!isRealSkillName(skill.name)) continue;
-		const lastDay = skill.daily.length > 0
-			? skill.daily[skill.daily.length - 1]?.date
-			: null;
-		let daysSinceUsed: number | null = null;
-		if (lastDay) {
-			daysSinceUsed = Math.floor((now - new Date(lastDay).getTime()) / (1000 * 60 * 60 * 24));
-		}
-
-		stats.set(skill.name, {
-			uses: skill.total,
-			lastUsed: lastDay || null,
-			daysSinceUsed,
-			isStale: daysSinceUsed !== null && daysSinceUsed > 30,
-			isHeavy: false,
-			daily: skill.daily,
-		});
-	}
-	return stats;
+export function getSkillkitStatsWithDailyAsync(): Promise<Map<string, SkillkitStatsWithDaily>> {
+	return Promise.resolve(getSkillkitStatsWithDaily());
 }
 
-export async function getSkillConflictsAsync(): Promise<Map<string, { skillName: string; similarity: number }[]>> {
-	const conflicts = new Map<string, { skillName: string; similarity: number }[]>();
-	if (!isSkillkitAvailable()) return conflicts;
-
-	const data = await runSkillkitJsonAsync(["conflicts", "--dry-run"]) as {
-		pairs?: { skill_a: string; skill_b: string; similarity: number }[];
-	} | null;
-
-	if (!data || !("pairs" in data)) return conflicts;
-
-	for (const pair of (data as { pairs: { skill_a: string; skill_b: string; similarity: number }[] }).pairs) {
-		if (!conflicts.has(pair.skill_a)) conflicts.set(pair.skill_a, []);
-		if (!conflicts.has(pair.skill_b)) conflicts.set(pair.skill_b, []);
-		conflicts.get(pair.skill_a)!.push({ skillName: pair.skill_b, similarity: pair.similarity });
-		conflicts.get(pair.skill_b)!.push({ skillName: pair.skill_a, similarity: pair.similarity });
-	}
-	return conflicts;
+export function getSkillConflictsAsync(): Promise<Map<string, AgentfilesConflict[]>> {
+	return Promise.resolve(getSkillConflicts());
 }
 
-export async function getSkillWarningsAsync(): Promise<{ oversized: { name: string; lines: number }[]; longDesc: { name: string; chars: number }[] }> {
-	if (!isSkillkitAvailable()) return { oversized: [], longDesc: [] };
-
-	const data = await runSkillkitJsonAsync(["health"]) as {
-		warnings?: { oversized: { name: string; lines: number }[]; long_descriptions: { name: string; chars: number }[] };
-	} | null;
-
-	if (!data?.warnings) return { oversized: [], longDesc: [] };
-	return {
-		oversized: data.warnings.oversized || [],
-		longDesc: data.warnings.long_descriptions || [],
-	};
+export function getSkillWarningsAsync(): Promise<{ oversized: { name: string; lines: number }[]; longDesc: { name: string; chars: number }[] }> {
+	return Promise.resolve(getSkillWarnings());
 }
 
-export function runSkillkitAction(args: string[]): { success: boolean; output: string } {
-	const bin = getSkillkitBin();
-	if (!bin) return { success: false, output: "skillkit not found" };
-	if (!areSafeCommandArguments(args)) return { success: false, output: "Invalid skillkit arguments" };
-	try {
-		const out = execFileSync(bin, args, {
-			encoding: "utf-8",
-			timeout: 30000,
-			env: { ...process.env, NO_COLOR: "1", PATH: buildPath() },
-			stdio: ["pipe", "pipe", "pipe"],
-			shell: IS_WIN ? "cmd.exe" : undefined,
-		}).trim();
-		return { success: true, output: out };
-	} catch (e: unknown) { /* empty */
-		return { success: false, output: e instanceof Error ? e.message : "unknown error" };
-	}
+export function getSkillkitCommand(args: string[] = []): string {
+	const safeArgs = args.map((arg) => /^[A-Za-z0-9_./:@+-]+$/.test(arg) ? arg : `'${arg.replaceAll("'", "'\\''")}'`);
+	return ["bunx", "@crafter/skillkit@latest", ...safeArgs].join(" ");
 }
 
 export function formatLastUsed(lastUsed: string | null): string {

@@ -1,8 +1,12 @@
-import { Notice, setIcon, type App } from "obsidian";
+import { Notice, setIcon } from "obsidian";
 import { openExternal } from "../utils/shell";
-import { isSkillkitAvailable, runSkillkitJson, runSkillkitAction } from "../skillkit";
+import {
+	getSkillkitCommand,
+	getSkillkitSnapshotGeneratedAt,
+	isSkillkitAvailable,
+	runSkillkitJson,
+} from "../skillkit";
 import { updateAllSkillsAsync } from "../marketplace";
-import { showConfirmModal } from "./confirm-modal";
 
 const DASHBOARD_BUILTIN_TOOLS = new Set([
 	"Read", "Write", "Edit", "MultiEdit", "Bash", "Glob", "Grep",
@@ -92,41 +96,15 @@ function loadData(): DashboardData {
 	};
 }
 
-import { existsSync, readFileSync, writeFileSync } from "fs";
-import { join } from "path";
-import { homedir } from "os";
-
-const CACHE_FILE = join(homedir(), ".skillkit", "dashboard-cache.json");
-
 let cachedData: DashboardData | null = null;
 let cachedAt: number | null = null;
 
-function loadDiskCache(): void {
-	if (cachedData) return;
-	if (!existsSync(CACHE_FILE)) return;
-	try {
-		const raw = JSON.parse(readFileSync(CACHE_FILE, "utf-8")) as { data: DashboardData; cachedAt: number };
-		cachedData = raw.data;
-		cachedAt = raw.cachedAt;
-	} catch { /* empty */ }
-}
-
-function saveDiskCache(): void {
-	if (!cachedData) return;
-	try {
-		writeFileSync(CACHE_FILE, JSON.stringify({ data: cachedData, cachedAt }, null, 2), "utf-8");
-	} catch { /* empty */ }
-}
-
-loadDiskCache();
-
 export class DashboardPanel {
 	private containerEl: HTMLElement;
-	private app: App;
-
-	constructor(containerEl: HTMLElement, app: App) {
+	private projectRoot: string;
+	constructor(containerEl: HTMLElement, projectRoot: string) {
 		this.containerEl = containerEl;
-		this.app = app;
+		this.projectRoot = projectRoot;
 	}
 
 	render(): void {
@@ -148,8 +126,8 @@ export class DashboardPanel {
 			window.setTimeout(() => {
 				const data = loadData();
 				cachedData = data;
-				cachedAt = Date.now();
-				saveDiskCache();
+				const generatedAt = getSkillkitSnapshotGeneratedAt();
+				cachedAt = generatedAt ? new Date(generatedAt).getTime() : Date.now();
 				loading.remove();
 				this.renderDashboard(data);
 			}, 10);
@@ -186,7 +164,7 @@ export class DashboardPanel {
 		updateBtn.addEventListener("click", () => {
 			updateBtn.setText("Updating...");
 			updateBtn.disabled = true;
-			void updateAllSkillsAsync().then((result) => {
+			void updateAllSkillsAsync(this.projectRoot).then((result) => {
 				if (result.success) {
 					const msg = result.count > 0 ? `Updated ${result.count} skill(s)` : "All skills up to date";
 					new Notice(msg, 5000);
@@ -201,45 +179,24 @@ export class DashboardPanel {
 			});
 		});
 
-		const scanBtn = buttons.createEl("button", { cls: "as-action-btn", text: "Scan sessions" });
+		const refreshBtn = buttons.createEl("button", { cls: "as-action-btn", text: "Refresh data" });
+		refreshBtn.addEventListener("click", () => {
+			cachedData = null;
+			cachedAt = null;
+			this.render();
+		});
+
+		const scanBtn = buttons.createEl("button", { cls: "as-action-btn", text: "Copy scan command" });
 		scanBtn.addEventListener("click", () => {
-			scanBtn.setText("Scanning...");
-			scanBtn.disabled = true;
-			window.setTimeout(() => {
-				const result = runSkillkitAction(["scan"]);
-				if (result.success) {
-					new Notice("Scan complete", 5000);
-					cachedData = null;
-					cachedAt = null;
-					this.render();
-				} else {
-					new Notice(`Scan failed: ${result.output}`, 5000);
-				}
-				scanBtn.setText("Scan sessions");
-				scanBtn.disabled = false;
-			}, 10);
+			void navigator.clipboard.writeText(getSkillkitCommand(["scan"]));
+			new Notice("Skillkit scan command copied", 5000);
 		});
 
 		if (data.health && data.health.usage.unused_30d > 0) {
-			const pruneBtn = buttons.createEl("button", { cls: "as-action-btn as-action-btn-danger", text: `Prune ${data.health.usage.unused_30d} stale` });
+			const pruneBtn = buttons.createEl("button", { cls: "as-action-btn as-action-btn-danger", text: `Copy prune command (${data.health.usage.unused_30d})` });
 			pruneBtn.addEventListener("click", () => {
-				showConfirmModal(this.app, "Prune stale skills", `Remove ${data.health!.usage.unused_30d} unused skills? This cannot be undone.`, () => {
-					pruneBtn.setText("Pruning...");
-					pruneBtn.disabled = true;
-					window.setTimeout(() => {
-						const result = runSkillkitAction(["prune", "--yes"]);
-						if (result.success) {
-							new Notice("Pruned stale skills", 5000);
-							cachedData = null;
-							cachedAt = null;
-							this.render();
-						} else {
-							new Notice(`Prune failed: ${result.output}`, 5000);
-						}
-						pruneBtn.setText(`Prune ${data.health!.usage.unused_30d} stale`);
-						pruneBtn.disabled = false;
-					}, 10);
-				});
+				void navigator.clipboard.writeText(getSkillkitCommand(["prune", "--yes"]));
+				new Notice("Skillkit prune command copied", 5000);
 			});
 		}
 	}
@@ -248,10 +205,10 @@ export class DashboardPanel {
 		const empty = this.containerEl.createDiv("as-dash-empty");
 		const iconEl = empty.createDiv("as-dash-empty-icon");
 		setIcon(iconEl, "bar-chart-2");
-		empty.createEl("h3", { text: "Dashboard requires skillkit" });
-		empty.createEl("p", { text: "Install skillkit to unlock usage analytics, burn rate, context tax, and more." });
+		empty.createEl("h3", { text: "Dashboard requires a skillkit snapshot" });
+		empty.createEl("p", { text: "Run skillkit once to create the local analytics snapshot. Agentfiles reads the file and never executes the CLI." });
 		const cmd = empty.createDiv("as-dash-install-cmd");
-		cmd.createEl("code", { text: "npm i -g @crafter/skillkit && skillkit scan" });
+		cmd.createEl("code", { text: getSkillkitCommand(["scan"]) });
 		const link = empty.createEl("a", {
 			cls: "as-skillkit-link",
 			text: "Learn more",

@@ -30,7 +30,7 @@ const sections = [
 			{ id: "skill-spec", label: "Skill Format" },
 			{ id: "supported-tools", label: "Supported Tools" },
 			{ id: "configuration", label: "Configuration" },
-			{ id: "skillkit", label: "skillkit CLI" },
+			{ id: "skillkit", label: "Skillkit analytics" },
 		],
 	},
 ];
@@ -420,13 +420,15 @@ function DashboardSection() {
 				>
 					skillkit
 				</a>{" "}
-				CLI to be installed and to have run at least one scan.
+				package to have generated a local snapshot with at least one scan.
 			</p>
-			<CodeBlock lang="bash">{`npm i -g @crafter/skillkit
-skillkit scan`}</CodeBlock>
+			<CodeBlock lang="bash">{`bunx @crafter/skillkit@latest scan
+npx @crafter/skillkit@latest scan`}</CodeBlock>
 			<p>
 				Once data is available, the Dashboard shows burn rate (tokens/day),
 				context tax (% of context used by skills), and health metrics per skill.
+				Agentfiles reads the snapshot through Skillkit&apos;s programmatic API
+				and does not launch a shell command.
 			</p>
 		</DocSection>
 	);
@@ -582,9 +584,11 @@ function ConfigurationSection() {
 					&mdash; search file contents by default, with a configurable scope
 				</li>
 				<li>
-					<strong className="text-[var(--foreground)]">Package runner</strong>{" "}
-					&mdash; choose <Code>npx</Code> or <Code>bunx</Code> for marketplace
-					installs (auto-detect by default)
+					<strong className="text-[var(--foreground)]">
+						Marketplace installs
+					</strong>{" "}
+					&mdash; download exact skill directories directly from GitHub at a
+					resolved commit SHA
 				</li>
 				<li>
 					<strong className="text-[var(--foreground)]">Project scanning</strong>{" "}
@@ -607,24 +611,20 @@ function ConfigurationSection() {
 
 function SkillkitSection() {
 	return (
-		<DocSection id="skillkit" title="skillkit CLI">
+		<DocSection id="skillkit" title="Skillkit analytics">
 			<p className="text-[var(--foreground)]">
-				skillkit is a companion CLI that provides analytics data for the
-				Dashboard. It is optional and not required for the core skill management
-				features.
+				Skillkit is an optional companion package that generates the local
+				analytics snapshot used by the Dashboard. It is not required for core
+				skill management.
 			</p>
-			<CodeBlock lang="bash">{`# Install globally
-npm i -g @crafter/skillkit
-
-# Run a scan (generates data for the Dashboard)
-skillkit scan
-
-# View usage report
-skillkit report`}</CodeBlock>
+			<CodeBlock lang="bash">{`bunx @crafter/skillkit@latest scan
+npx @crafter/skillkit@latest scan`}</CodeBlock>
 			<p>
-				skillkit reads Claude Code session JSONL files and computes token usage,
-				burn rate, and context tax per skill. The data is stored locally and
-				never sent to any server.
+				The <Code>npx</Code> form requires Bun to be installed and available on
+				<Code>PATH</Code>. Skillkit reads local session JSONL files and computes
+				token usage, burn rate, and context tax per skill. Agentfiles loads that
+				local snapshot through <Code>@crafter/skillkit/agentfiles</Code>. The
+				data is never sent to Agentfiles or Skillkit servers.
 			</p>
 		</DocSection>
 	);
