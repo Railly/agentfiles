@@ -9,7 +9,7 @@ Community scorecard scans must inspect only the Obsidian plugin source. Release 
 3. Inspect the generated tag with `git ls-tree -r --name-only <version>`.
 4. Push the source branch and the generated tag after review.
 
-The release workflow rejects tags containing `web/` or `vscode/`, installs with the frozen lockfile, reruns every check, builds the plugin, and attaches provenance for `main.js`, `manifest.json`, and `styles.css`.
+The release workflow rejects tags containing `scripts/`, `web/`, or `vscode/`, installs with the frozen lockfile, reruns every check, builds the plugin, and attaches provenance for `main.js`, `manifest.json`, and `styles.css`.
 
 ## Expected scorecard capabilities
 
