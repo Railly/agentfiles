@@ -17,9 +17,7 @@ jobs:
         run: bun install --frozen-lockfile
       - name: Check tool count drift
         run: bun run scripts/check-tool-count.ts
-      - name: Build
-        run: bun run build
-      - name: Lint
-        run: bun run lint
-      - name: Test
-        run: bun test
+      - name: Check
+        run: bun run check
+      - name: Verify plugin has no process execution
+        run: '! rg -n ''child_process|execFile|execSync|spawn\('' src main.js'

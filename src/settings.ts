@@ -97,21 +97,6 @@ export class AgentfilesSettingTab extends PluginSettingTab {
 					})
 			);
 
-		new Setting(containerEl).setName("Marketplace").setHeading();
-
-		new Setting(containerEl)
-			.setName("Package runner")
-			.setDesc("Command used to install skills from the marketplace")
-			.addDropdown((dropdown) =>
-				dropdown
-					.addOptions({ auto: "Auto-detect", npx: "npx", bunx: "bunx" })
-					.setValue(this.plugin.settings.packageRunner)
-					.onChange(async (value) => {
-						this.plugin.settings.packageRunner = value as "auto" | "npx" | "bunx";
-						await this.plugin.saveSettings();
-					})
-			);
-
 		new Setting(containerEl).setName("Project scanning").setHeading();
 
 		new Setting(containerEl)
@@ -171,7 +156,7 @@ export class AgentfilesSettingTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName("Add custom path")
 			.setDesc(
-				"Additional directories to scan for project-level skills (looks for .claude/skills, .claude/commands, .claude/agents, .cursor/skills, .codex/skills inside each path)"
+				"Additional project directories to scan for supported skill, command, and agent folders"
 			)
 			.addText((text) =>
 				text

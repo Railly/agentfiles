@@ -1,18 +1,17 @@
-import { Modal, Notice, Setting, type App } from "obsidian";
-import { existsSync, readFileSync, writeFileSync } from "fs";
+import { FileSystemAdapter, Modal, Notice, Setting, type App } from "obsidian";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 import { join } from "path";
 import { homedir } from "os";
 import { installSkillAsync, VALID_AGENTS, TOOL_TO_AGENT, type MarketplaceSkill } from "../marketplace";
 import { getInstalledTools } from "../scanner";
 import { TOOL_SVGS, renderToolIcon } from "../tool-icons";
-import type { ChopsSettings } from "../types";
 
 const AGENT_TO_TOOL: Record<string, string> = {};
 for (const [toolId, agentId] of Object.entries(TOOL_TO_AGENT)) {
 	if (!AGENT_TO_TOOL[agentId]) AGENT_TO_TOOL[agentId] = toolId;
 }
 
-const PREFS_FILE = join(homedir(), ".skillkit", "install-prefs.json");
+const PREFS_FILE = join(homedir(), ".agentfiles", "install-prefs.json");
 
 let lastSelectedAgents: Set<string> | null = null;
 let lastIsGlobal = true;
@@ -34,6 +33,7 @@ function loadPrefs(): void {
 
 function savePrefs(): void {
 	try {
+		mkdirSync(join(homedir(), ".agentfiles"), { recursive: true });
 		writeFileSync(PREFS_FILE, JSON.stringify({
 			agents: lastSelectedAgents ? [...lastSelectedAgents] : [],
 			globalInstall: lastIsGlobal,
@@ -45,15 +45,13 @@ loadPrefs();
 
 export class InstallSkillModal extends Modal {
 	private skill: MarketplaceSkill;
-	private settings: ChopsSettings;
 	private onInstalled: () => void;
 	private selectedAgents: Set<string>;
 	private isGlobal: boolean;
 
-	constructor(app: App, skill: MarketplaceSkill, settings: ChopsSettings, onInstalled: () => void) {
+	constructor(app: App, skill: MarketplaceSkill, onInstalled: () => void) {
 		super(app);
 		this.skill = skill;
-		this.settings = settings;
 		this.onInstalled = onInstalled;
 
 		if (lastSelectedAgents) {
@@ -153,16 +151,19 @@ export class InstallSkillModal extends Modal {
 		new Notice(`Installing ${this.skill.name}...`, 3000);
 
 		void installSkillAsync(this.skill.source, agents, {
-			runner: this.settings.packageRunner,
 			globalInstall: this.isGlobal,
+			projectRoot: this.app.vault.adapter instanceof FileSystemAdapter
+				? this.app.vault.adapter.getBasePath()
+				: undefined,
 			skillName: this.skill.name,
+			skillId: this.skill.skillId,
 		}).then((result) => {
 			if (result.success) {
 				new Notice(`Installed ${this.skill.name}`, 5000);
 				this.skill.installed = true;
 				this.onInstalled();
 			} else {
-				new Notice(`Failed to install ${this.skill.name}`, 5000);
+				new Notice(`Failed to install ${this.skill.name}: ${result.output}`, 5000);
 			}
 		});
 	}

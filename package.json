@@ -1,13 +1,18 @@
 {
   "name": "agentfiles",
-  "version": "0.8.1",
+  "version": "0.9.0",
   "description": "AI Skills Manager for Obsidian",
   "main": "main.js",
   "scripts": {
     "dev": "node esbuild.config.mjs",
     "build": "node esbuild.config.mjs production",
+    "check": "bun run lint && bun test && bun run build",
     "lint": "eslint src/",
+    "release:tag": "bun run scripts/prepare-release-tag.ts",
     "test": "bun test"
+  },
+  "dependencies": {
+    "@crafter/skillkit": "^0.14.0"
   },
   "devDependencies": {
     "@codemirror/autocomplete": "^6.20.1",
@@ -19,12 +24,13 @@
     "@codemirror/state": "^6.6.0",
     "@codemirror/view": "^6.41.0",
     "@lezer/highlight": "^1.2.3",
+    "@types/bun": "^1.4.0",
     "@types/node": "^22.0.0",
     "@typescript-eslint/eslint-plugin": "^8.57.2",
     "@typescript-eslint/parser": "^8.57.2",
     "esbuild": "^0.25.0",
     "eslint": "9",
-    "eslint-plugin-obsidianmd": "^0.1.9",
+    "eslint-plugin-obsidianmd": "^0.4.2",
     "obsidian": "latest",
     "typescript": "^5.7.0"
   }

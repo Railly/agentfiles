@@ -1,18 +1,16 @@
 import tsParser from "@typescript-eslint/parser";
-import { defineConfig } from "eslint/config";
+import { defineConfig, globalIgnores } from "eslint/config";
 import obsidianmd from "eslint-plugin-obsidianmd";
 
 export default defineConfig([
-	{
-		ignores: [
-			"main.js",
-			"node_modules/**",
-			"*.mjs",
-			"web/**",
-			"assets/**",
-			"scripts/**",
-		],
-	},
+	globalIgnores([
+		"main.js",
+		"node_modules/**",
+		"*.mjs",
+		"web/**",
+		"vscode/**",
+		"assets/**",
+	]),
 	...obsidianmd.configs.recommended,
 	{
 		files: ["src/**/*.ts"],
@@ -38,19 +36,6 @@ export default defineConfig([
 				activeDocument: "readonly",
 				window: "readonly",
 			},
-		},
-		rules: {
-			"import/no-extraneous-dependencies": ["error", {
-				devDependencies: true,
-				peerDependencies: true,
-				optionalDependencies: false,
-			}],
-			"@typescript-eslint/no-unsafe-assignment": "off",
-			"@typescript-eslint/no-unsafe-member-access": "off",
-			"@typescript-eslint/no-unsafe-argument": "off",
-			"@typescript-eslint/no-unsafe-call": "off",
-			"@typescript-eslint/no-unsafe-return": "off",
-			"@typescript-eslint/no-base-to-string": "error",
 		},
 	},
 ]);

@@ -32,9 +32,10 @@ You can also search **Agentfiles** in Settings → Community plugins inside Obsi
 ### Optional: skillkit analytics
 
 ```bash
-npm i -g @crafter/skillkit
-skillkit scan
+bunx @crafter/skillkit@latest scan
 ```
+
+`npx -y @crafter/skillkit@latest scan` also works when Bun is installed and available on `PATH`. Skillkit uses the Bun runtime, so `npx` does not remove that requirement.
 
 ## What it does
 
@@ -91,13 +92,26 @@ See [Install](#install) above.
 
 ### What is skillkit analytics?
 
-Optional CLI for the Dashboard's usage metrics (burn rate, context tax, health):
+Optional local analytics for the Dashboard's usage metrics, burn rate, context tax, and health. Agentfiles imports Skillkit's portable API and reads a versioned snapshot. It never executes the Skillkit CLI.
 
 ```bash
-npm i -g @crafter/skillkit
-# or: bun add -g @crafter/skillkit
-skillkit scan
+bunx @crafter/skillkit@latest scan
+# npx alternative, with Bun installed:
+npx -y @crafter/skillkit@latest scan
 ```
+
+## Security and permissions
+
+Agentfiles is desktop-only because its core purpose requires direct access to skill files outside the current vault.
+
+- **Filesystem:** reads supported agent directories and user-configured project paths. Writes happen only for explicit create, edit, install, update, or remove actions.
+- **Marketplace:** searches `skills.sh`, resolves the selected source through the GitHub API, pins downloads to a commit SHA, rejects path traversal, and limits each install to 200 files and 10 MB.
+- **Shell:** Agentfiles does not spawn processes or execute shell commands. Optional Skillkit actions are shown or copied for the user to run separately.
+- **Analytics:** Agentfiles reads `~/.skillkit/agentfiles-snapshot.json` through Skillkit's versioned programmatic API. The snapshot remains local.
+- **Network and telemetry:** Marketplace search, preview, and install use `skills.sh` and GitHub. Agentfiles sends no analytics or telemetry.
+- **Clipboard:** commands are copied only after an explicit button click.
+
+The Obsidian scorecard can still identify direct filesystem access as a risk capability. That capability is required for Agentfiles to manage skills across desktop coding agents. It is disclosed here so users can review the exact scope.
 
 ### Is Agentfiles free and open source?
 

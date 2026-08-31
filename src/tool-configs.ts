@@ -2,13 +2,26 @@ import { homedir, platform } from "os";
 import { existsSync, readdirSync } from "fs";
 import { join } from "path";
 import type { ToolConfig } from "./types";
-import { getPackageManagerBinDirs } from "./skillkit";
 
 const HOME = homedir();
 const IS_WIN = platform() === "win32";
 const XDG_CONFIG = process.env.XDG_CONFIG_HOME || (IS_WIN ? join(HOME, ".config") : join(HOME, ".config"));
 
 const _installCache = new Map<string, boolean>();
+
+function getPackageManagerBinDirs(): string[] {
+	return [
+		join(HOME, ".bun", "bin"),
+		join(HOME, ".local", "share", "mise", "shims"),
+		join(HOME, ".local", "share", "pnpm"),
+		join(HOME, ".volta", "bin"),
+		join(HOME, ".yarn", "bin"),
+		join(HOME, ".config", "yarn", "global", "node_modules", ".bin"),
+		join(HOME, ".fnm", "aliases", "default", "bin"),
+		join(HOME, ".asdf", "shims"),
+		join(HOME, ".proto", "bin"),
+	];
+}
 
 export function clearInstallCache(): void {
 	_installCache.clear();

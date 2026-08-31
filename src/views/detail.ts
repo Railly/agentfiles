@@ -6,9 +6,8 @@ import type { SkillItem, ChopsSettings } from "../types";
 import type { SkillStore } from "../store";
 import { TOOL_CONFIGS } from "../tool-configs";
 import { TOOL_SVGS, renderToolIcon } from "../tool-icons";
-import { formatLastUsed, getSkillTraces, runSkillkitAction, isSkillkitAvailable } from "../skillkit";
+import { formatLastUsed, getSkillkitCommand, getSkillTraces, isSkillkitAvailable } from "../skillkit";
 import { renderSparkline } from "./sparkline";
-import { showConfirmModal } from "./confirm-modal";
 import { createSkillEditor } from "../editor/editor-factory";
 
 function estimateTokens(text: string): number {
@@ -146,20 +145,12 @@ export class DetailPanel {
 		if (isSkillkitAvailable()) {
 			const deleteBtn = right.createEl("button", {
 				cls: "as-toolbar-btn as-toolbar-btn-danger",
-				attr: { "aria-label": "Remove skill" },
+				attr: { "aria-label": "Copy remove command" },
 			});
 			setIcon(deleteBtn, "trash-2");
 			deleteBtn.addEventListener("click", () => {
-				showConfirmModal(this.app, "Remove skill", `Remove "${item.name}"? This will delete the skill files.`, () => {
-					const result = runSkillkitAction(["prune", "--skill", item.name, "--yes"]);
-					if (result.success) {
-						new Notice(`Removed ${item.name}`, 5000);
-						this.store.refresh(this.settings);
-						this.clear();
-					} else {
-						new Notice(`Failed to remove: ${result.output}`, 5000);
-					}
-				});
+				void navigator.clipboard.writeText(getSkillkitCommand(["prune", "--skill", item.name, "--yes"]));
+				new Notice(`Remove command copied for ${item.name}`, 5000);
 			});
 		}
 
@@ -318,16 +309,10 @@ export class DetailPanel {
 		const btn = section.createEl("button", { cls: "as-prune-btn", text: "Remove this skill" });
 		section.createSpan({ cls: "as-prune-hint", text: "This skill hasn't been used in 30+ days" });
 
+		btn.setText("Copy remove command");
 		btn.addEventListener("click", () => {
-			showConfirmModal(this.app, "Remove skill", `Remove "${item.name}"? This will delete the skill files.`, () => {
-				const result = runSkillkitAction(["prune", "--skill", item.name, "--yes"]);
-				if (result.success) {
-					new Notice(`Removed ${item.name}`, 5000);
-					this.store.refresh(this.settings);
-				} else {
-					new Notice(`Failed to remove: ${result.output}`, 5000);
-				}
-			});
+			void navigator.clipboard.writeText(getSkillkitCommand(["prune", "--skill", item.name, "--yes"]));
+			new Notice(`Remove command copied for ${item.name}`, 5000);
 		});
 	}
 

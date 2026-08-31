@@ -22,11 +22,20 @@ jobs:
         with:
           bun-version: latest
 
+      - name: Verify plugin-only source tree
+        run: |
+          test ! -d web
+          test ! -d vscode
+          ! rg -n 'child_process|execFile|execSync|spawn\(' src
+
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Build
-        run: bun run build
+      - name: Check
+        run: bun run check
+
+      - name: Verify built plugin has no process execution
+        run: '! rg -n ''child_process|execFile|execSync|spawn\('' main.js'
 
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@v2
