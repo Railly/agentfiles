@@ -40,6 +40,15 @@ describe("marketplace GitHub source", () => {
 			"https://raw.githubusercontent.com/owner/repo/0123456789abcdef/skills/demo/SKILL.md",
 		);
 	});
+
+	test("refreshes repository metadata after clearing the session cache", async () => {
+		const { clearMarketplaceTreeCache, fetchSkillContent } = await import("./marketplace");
+		const before = requestedUrls.filter((url) => url === "https://api.github.com/repos/owner/repo").length;
+		clearMarketplaceTreeCache();
+		await fetchSkillContent("owner/repo", "demo", "owner/repo/demo");
+		const after = requestedUrls.filter((url) => url === "https://api.github.com/repos/owner/repo").length;
+		expect(after).toBe(before + 1);
+	});
 });
 
 describe("marketplace filesystem transactions", () => {
@@ -112,6 +121,28 @@ describe("marketplace filesystem transactions", () => {
 			expect(JSON.parse(readFileSync(lockPath, "utf-8"))).toEqual({
 				version: 3,
 				skills: { demo: { source: "owner/updated" } },
+			});
+		} finally {
+			rmSync(fixture, { recursive: true, force: true });
+		}
+	});
+
+	test("keeps the committed lock when backup cleanup fails", async () => {
+		const { writeLockFileAt } = await import("./marketplace");
+		const fixture = mkdtempSync(join(tmpdir(), "agentfiles-marketplace-test-"));
+		try {
+			const lockPath = join(fixture, ".agents", ".skill-lock.json");
+			writeLockFileAt(lockPath, { version: 3, skills: { demo: { source: "owner/old" } } });
+			expect(() =>
+				writeLockFileAt(
+					lockPath,
+					{ version: 3, skills: { demo: { source: "owner/new" } } },
+					() => false,
+				),
+			).not.toThrow();
+			expect(JSON.parse(readFileSync(lockPath, "utf-8"))).toEqual({
+				version: 3,
+				skills: { demo: { source: "owner/new" } },
 			});
 		} finally {
 			rmSync(fixture, { recursive: true, force: true });

@@ -130,6 +130,10 @@ interface SkillDescriptor {
 
 const treeCache = new Map<string, RepoTree>();
 
+export function clearMarketplaceTreeCache(): void {
+	treeCache.clear();
+}
+
 export async function searchSkills(query: string, projectRoot?: string): Promise<MarketplaceSkill[]> {
 	if (query.length < 2) return [];
 	try {
@@ -381,21 +385,27 @@ function readLockFile(path: string): SkillLockFile {
 	}
 }
 
-export function writeLockFileAt(path: string, lock: SkillLockFile): void {
+export function writeLockFileAt(
+	path: string,
+	lock: SkillLockFile,
+	cleanup: (path: string) => boolean = cleanupPathBestEffort,
+): void {
 	mkdirSync(dirname(path), { recursive: true });
 	const temporaryPath = `${path}.agentfiles-${randomUUID()}.tmp`;
 	const backupPath = `${path}.agentfiles-${randomUUID()}.bak`;
+	let committed = false;
 	try {
 		writeFileSync(temporaryPath, `${JSON.stringify(lock, null, 2)}\n`, "utf-8");
 		if (existsSync(path)) renameSync(path, backupPath);
 		renameSync(temporaryPath, path);
-		rmSync(backupPath, { force: true });
+		committed = true;
+		cleanup(backupPath);
 	} catch (error) {
-		if (!existsSync(path) && existsSync(backupPath)) renameSync(backupPath, path);
+		if (!committed && !existsSync(path) && existsSync(backupPath)) renameSync(backupPath, path);
 		throw error;
 	} finally {
-		rmSync(temporaryPath, { force: true });
-		if (existsSync(path)) rmSync(backupPath, { force: true });
+		cleanup(temporaryPath);
+		if (existsSync(path)) cleanup(backupPath);
 	}
 }
 
@@ -572,6 +582,7 @@ export async function removeSkillAsync(skillName: string, projectRoot?: string):
 }
 
 export async function updateAllSkillsAsync(projectRoot?: string): Promise<{ success: boolean; output: string; count: number }> {
+	clearMarketplaceTreeCache();
 	const entries = getLockPaths(projectRoot).flatMap((path) =>
 		Object.entries(readLockFile(path).skills ?? {}).filter(([, entry]) => entry.agentfiles)
 	);

@@ -1,5 +1,5 @@
 import { Component, MarkdownRenderer, Notice, setIcon, type App } from "obsidian";
-import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "fs";
+import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, rmSync, statSync, writeFileSync } from "fs";
 import { join } from "path";
 import { homedir } from "os";
 import { randomUUID } from "crypto";
@@ -7,14 +7,31 @@ import { searchSkills, fetchSkillContent, formatInstalls, getPopularSkills, remo
 import { InstallSkillModal } from "./install-modal";
 import { showConfirmModal } from "./confirm-modal";
 
-const POPULAR_CACHE_FILE = join(homedir(), ".agentfiles", "marketplace-popular.json");
+const CACHE_DIRECTORY = join(homedir(), ".agentfiles");
+const POPULAR_CACHE_NAME = "marketplace-popular.json";
+const POPULAR_CACHE_FILE = join(CACHE_DIRECTORY, POPULAR_CACHE_NAME);
+const TEMP_MAX_AGE_MS = 86_400_000;
 
 let cachedPopular: MarketplaceSkill[] | null = null;
 let cachedSearchQuery = "";
 let cachedSearchResults: MarketplaceSkill[] | null = null;
 const renderComponent = new Component();
 
+function cleanupPopularCacheTemps(): void {
+	if (!existsSync(CACHE_DIRECTORY)) return;
+	for (const name of readdirSync(CACHE_DIRECTORY)) {
+		if (!name.startsWith(`${POPULAR_CACHE_NAME}.`) || !name.endsWith(".tmp")) continue;
+		const path = join(CACHE_DIRECTORY, name);
+		try {
+			if (Date.now() - statSync(path).mtimeMs >= TEMP_MAX_AGE_MS) rmSync(path, { force: true });
+		} catch {
+			continue;
+		}
+	}
+}
+
 function loadPopularFromDisk(): void {
+	cleanupPopularCacheTemps();
 	if (cachedPopular) return;
 	if (!existsSync(POPULAR_CACHE_FILE)) return;
 	try {
@@ -29,7 +46,7 @@ function savePopularToDisk(): void {
 	if (!cachedPopular) return;
 	const temporaryPath = `${POPULAR_CACHE_FILE}.${randomUUID()}.tmp`;
 	try {
-		mkdirSync(join(homedir(), ".agentfiles"), { recursive: true });
+		mkdirSync(CACHE_DIRECTORY, { recursive: true });
 		writeFileSync(temporaryPath, JSON.stringify(cachedPopular), "utf-8");
 		renameSync(temporaryPath, POPULAR_CACHE_FILE);
 	} catch {

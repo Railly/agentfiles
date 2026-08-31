@@ -3,10 +3,12 @@ import { watch, type FSWatcher } from "fs";
 import {
 	existsSync,
 	readFileSync,
+	readdirSync,
 	writeFileSync,
 	mkdirSync,
 	renameSync,
 	rmSync,
+	statSync,
 } from "fs";
 import { join, dirname } from "path";
 import { homedir } from "os";
@@ -165,16 +167,35 @@ function getInstalledNames(): Set<string> {
 			if (data.skills) {
 				for (const name of Object.keys(data.skills)) names.add(name);
 			}
-		} catch {}
+		} catch {
+			continue;
+		}
 	}
 	return names;
 }
 
-const POPULAR_CACHE = join(HOME, ".agentfiles", "marketplace-popular-vscode.json");
+const CACHE_DIRECTORY = join(HOME, ".agentfiles");
+const POPULAR_CACHE_NAME = "marketplace-popular-vscode.json";
+const POPULAR_CACHE = join(CACHE_DIRECTORY, POPULAR_CACHE_NAME);
+const TEMP_MAX_AGE_MS = 86_400_000;
+
+function cleanupPopularCacheTemps(): void {
+	if (!existsSync(CACHE_DIRECTORY)) return;
+	for (const name of readdirSync(CACHE_DIRECTORY)) {
+		if (!name.startsWith(`${POPULAR_CACHE_NAME}.`) || !name.endsWith(".tmp")) continue;
+		const path = join(CACHE_DIRECTORY, name);
+		try {
+			if (Date.now() - statSync(path).mtimeMs >= TEMP_MAX_AGE_MS) rmSync(path, { force: true });
+		} catch {
+			continue;
+		}
+	}
+}
 
 // Disk-cached wrapper over src/marketplace getPopularSkills: serve the cache instantly,
 // refresh in the background. The one-off fetch and slug logic live in src/marketplace.
 async function marketplacePopular(): Promise<MarketplaceSkill[]> {
+	cleanupPopularCacheTemps();
 	try {
 		if (existsSync(POPULAR_CACHE)) {
 			const cached = JSON.parse(readFileSync(POPULAR_CACHE, "utf-8")) as MarketplaceSkill[];
