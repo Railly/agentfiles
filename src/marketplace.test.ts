@@ -43,6 +43,7 @@ describe("marketplace GitHub source", () => {
 
 	test("refreshes repository metadata after clearing the session cache", async () => {
 		const { clearMarketplaceTreeCache, fetchSkillContent } = await import("./marketplace");
+		await fetchSkillContent("owner/repo", "demo", "owner/repo/demo");
 		const before = requestedUrls.filter((url) => url === "https://api.github.com/repos/owner/repo").length;
 		clearMarketplaceTreeCache();
 		await fetchSkillContent("owner/repo", "demo", "owner/repo/demo");
