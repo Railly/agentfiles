@@ -1,12 +1,13 @@
 {
   "name": "agentfiles",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "description": "AI Skills Manager for Obsidian",
   "main": "main.js",
   "scripts": {
+    "audit": "bun audit",
     "dev": "node esbuild.config.mjs",
     "build": "node esbuild.config.mjs production",
-    "check": "bun run lint && bun test && bun run build",
+    "check": "bun run audit && bun run lint && bun test && bun run build",
     "lint": "eslint src/",
     "release:tag": "bun run scripts/prepare-release-tag.ts",
     "test": "bun test"
