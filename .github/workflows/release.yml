@@ -26,7 +26,8 @@ jobs:
         run: |
           test ! -d web
           test ! -d vscode
-          ! rg -n 'child_process|execFile|execSync|spawn\(' src
+          test ! -d scripts
+          ! rg -n '(node:)?child_process|execFile|execSync|spawn(Sync)?\(|Bun\.spawn(Sync)?|Deno\.Command' src
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
@@ -35,7 +36,7 @@ jobs:
         run: bun run check
 
       - name: Verify built plugin has no process execution
-        run: '! rg -n ''child_process|execFile|execSync|spawn\('' main.js'
+        run: '! rg -n ''(node:)?child_process|execFile|execSync|spawn(Sync)?\(|Bun\.spawn(Sync)?|Deno\.Command'' main.js'
 
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@v2

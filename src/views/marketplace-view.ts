@@ -1,7 +1,8 @@
 import { Component, MarkdownRenderer, Notice, setIcon, type App } from "obsidian";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
+import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "fs";
 import { join } from "path";
 import { homedir } from "os";
+import { randomUUID } from "crypto";
 import { searchSkills, fetchSkillContent, formatInstalls, getPopularSkills, removeSkillAsync, refreshInstalledStatus, type MarketplaceSkill } from "../marketplace";
 import { InstallSkillModal } from "./install-modal";
 import { showConfirmModal } from "./confirm-modal";
@@ -19,15 +20,21 @@ function loadPopularFromDisk(): void {
 	try {
 		const skills = JSON.parse(readFileSync(POPULAR_CACHE_FILE, "utf-8")) as MarketplaceSkill[];
 		cachedPopular = skills;
-	} catch { /* empty */ }
+	} catch {
+		rmSync(POPULAR_CACHE_FILE, { force: true });
+	}
 }
 
 function savePopularToDisk(): void {
 	if (!cachedPopular) return;
+	const temporaryPath = `${POPULAR_CACHE_FILE}.${randomUUID()}.tmp`;
 	try {
 		mkdirSync(join(homedir(), ".agentfiles"), { recursive: true });
-		writeFileSync(POPULAR_CACHE_FILE, JSON.stringify(cachedPopular), "utf-8");
-	} catch { /* empty */ }
+		writeFileSync(temporaryPath, JSON.stringify(cachedPopular), "utf-8");
+		renameSync(temporaryPath, POPULAR_CACHE_FILE);
+	} catch {
+		rmSync(temporaryPath, { force: true });
+	}
 }
 
 loadPopularFromDisk();

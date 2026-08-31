@@ -20,4 +20,4 @@ jobs:
       - name: Check
         run: bun run check
       - name: Verify plugin has no process execution
-        run: '! rg -n ''child_process|execFile|execSync|spawn\('' src main.js'
+        run: '! rg -n ''(node:)?child_process|execFile|execSync|spawn(Sync)?\(|Bun\.spawn(Sync)?|Deno\.Command'' src main.js'

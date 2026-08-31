@@ -83,9 +83,23 @@ describe("marketplace filesystem transactions", () => {
 			for (const root of roots) {
 				expect(readFileSync(join(root, "demo", "SKILL.md"), "utf-8")).toBe("old");
 			}
+
+			const retry = installCopiesTransactional(source, roots, "demo");
+			retry.finalize();
+			for (const root of roots) {
+				expect(readFileSync(join(root, "demo", "SKILL.md"), "utf-8")).toBe("new");
+			}
 		} finally {
 			rmSync(fixture, { recursive: true, force: true });
 		}
+	});
+
+	test("cleanup failures do not reverse committed state", async () => {
+		const { cleanupPathBestEffort } = await import("./marketplace");
+		const result = cleanupPathBestEffort("ignored", () => {
+			throw new Error("forced cleanup failure");
+		});
+		expect(result).toBe(false);
 	});
 
 	test("writes lock files atomically", async () => {

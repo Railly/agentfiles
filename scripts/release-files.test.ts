@@ -9,11 +9,13 @@ describe("release source tree", () => {
 	test("excludes non-plugin applications", () => {
 		expect(RELEASE_PATHS).not.toContain("web");
 		expect(RELEASE_PATHS).not.toContain("vscode");
-		expect(PROHIBITED_RELEASE_PREFIXES).toEqual(["web/", "vscode/"]);
+		expect(RELEASE_PATHS).not.toContain("scripts");
+		expect(PROHIBITED_RELEASE_PREFIXES).toEqual(["scripts/", "web/", "vscode/"]);
 	});
 
 	test("detects prohibited tag paths", () => {
 		expect(hasProhibitedReleasePath(["src/main.ts", "web/app/page.tsx"])).toBe(true);
+		expect(hasProhibitedReleasePath(["scripts/prepare-release-tag.ts"])).toBe(true);
 		expect(hasProhibitedReleasePath(["src/main.ts", "README.md"])).toBe(false);
 	});
 });

@@ -107,6 +107,18 @@ interface InstallCopyTransaction {
 	rollback(): void;
 }
 
+export function cleanupPathBestEffort(
+	path: string,
+	remove: typeof rmSync = rmSync,
+): boolean {
+	try {
+		remove(path, { recursive: true, force: true });
+		return true;
+	} catch {
+		return false;
+	}
+}
+
 interface SkillDescriptor {
 	ref: string;
 	entry: GitHubTreeEntry;
@@ -455,7 +467,7 @@ export function installCopiesTransactional(
 	return {
 		paths: records.map(({ target }) => target),
 		finalize: () => {
-			for (const record of records) rmSync(record.staging, { recursive: true, force: true });
+			for (const record of records) cleanupPathBestEffort(record.staging);
 		},
 		rollback: () => {
 			for (const record of [...records].reverse()) {
@@ -546,14 +558,14 @@ export async function removeSkillAsync(skillName: string, projectRoot?: string):
 			}
 			delete lock.skills?.[skillName];
 			writeLockFileAt(lockPath, lock);
-			for (const { backup } of staged) rmSync(backup, { recursive: true, force: true });
-			removed++;
 		} catch (error) {
 			for (const { path, backup } of [...staged].reverse()) {
 				if (existsSync(backup)) renameSync(backup, path);
 			}
 			return { success: false, output: error instanceof Error ? error.message : "Remove failed" };
 		}
+		for (const { backup } of staged) cleanupPathBestEffort(backup);
+		removed++;
 	}
 	if (removed === 0) return { success: false, output: "This install is managed by the skills CLI" };
 	return { success: true, output: `Removed ${skillName}` };

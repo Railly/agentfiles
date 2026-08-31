@@ -49,13 +49,13 @@ export function getSkillkitSnapshotGeneratedAt(): string | null {
 	return readSnapshot()?.generatedAt ?? null;
 }
 
-export function runSkillkitJson(args: string[]): Record<string, unknown> | unknown[] | null {
+export function runSkillkitJson(args: string[]): unknown {
 	const command = args[0];
 	if (command !== "stats" && command !== "health" && command !== "burn" && command !== "context") return null;
 	return readSnapshot()?.dashboard[command] ?? null;
 }
 
-export function runSkillkitJsonAsync(args: string[]): Promise<Record<string, unknown> | unknown[] | null> {
+export function runSkillkitJsonAsync(args: string[]): Promise<unknown> {
 	return Promise.resolve(runSkillkitJson(args));
 }
 

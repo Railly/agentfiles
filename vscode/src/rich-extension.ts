@@ -5,18 +5,19 @@ import {
 	readFileSync,
 	writeFileSync,
 	mkdirSync,
-	readdirSync,
+	renameSync,
+	rmSync,
 } from "fs";
-import { join, delimiter, dirname } from "path";
-import { homedir, platform } from "os";
-import { execSync } from "child_process";
-import { createHash } from "crypto";
+import { join, dirname } from "path";
+import { homedir } from "os";
+import { createHash, randomUUID } from "crypto";
 import { scanAll, getInstalledTools } from "../../src/scanner";
 import { clearInstallCache } from "../../src/tool-configs";
 import { TOOL_CONFIGS } from "../../src/tool-configs";
 import { parseAllConversationsSync } from "../../src/conversations/parser";
-import { isSkillkitAvailable } from "../../src/skillkit";
+import { isSkillkitAvailable, runSkillkitJson } from "../../src/skillkit";
 import {
+	fetchSkillContent,
 	getPopularSkills,
 	installSkillAsync,
 	type MarketplaceSkill,
@@ -72,48 +73,14 @@ function _isRealSkill(name: string): boolean {
 	return !BUILTIN_TOOLS.has(name) && !name.startsWith("mcp__") && !name.startsWith("mcp_");
 }
 
-let _skillkitBin: string | null | undefined;
-function _getSkillkitBin(): string | null {
-	if (_skillkitBin !== undefined) return _skillkitBin;
-	const names = IS_WIN ? ["skillkit.cmd", "skillkit.exe", "skillkit"] : ["skillkit"];
-	const dirs: string[] = IS_WIN
-		? [join(process.env.APPDATA || join(homedir(), "AppData", "Roaming"), "npm"), join(homedir(), ".bun", "bin")]
-		: ["/usr/local/bin", "/opt/homebrew/bin", join(homedir(), ".local", "bin"), join(homedir(), ".bun", "bin")];
-	const nvmDir = IS_WIN ? join(homedir(), "AppData", "Roaming", "nvm") : join(homedir(), ".nvm", "versions", "node");
-	try { for (const d of readdirSync(nvmDir)) dirs.push(IS_WIN ? join(nvmDir, d) : join(nvmDir, d, "bin")); } catch {}
-	for (const dir of dirs) for (const n of names) { const p = join(dir, n); if (existsSync(p)) { _skillkitBin = p; return p; } }
-	_skillkitBin = null;
-	return null;
-}
-
-function _runSkillkitJson(cmd: string): unknown {
-	const bin = _getSkillkitBin();
-	if (!bin) return null;
-	try {
-		const out = execSync(`${bin} ${cmd} --json`, {
-			encoding: "utf-8",
-			timeout: 15000,
-			env: { ...process.env, NO_COLOR: "1", PATH: buildPath() },
-			stdio: ["pipe", "pipe", "pipe"],
-		}).trim();
-		const start = Math.min(
-			...[out.indexOf("{"), out.indexOf("[")].filter((i) => i >= 0),
-		);
-		if (start === Number.POSITIVE_INFINITY) return null;
-		return JSON.parse(out.slice(start));
-	} catch {
-		return null;
-	}
-}
-
 function loadSkillkitData(): SkillkitData {
 	if (!isSkillkitAvailable()) {
 		return { available: false, stats: null, health: null, burn: null, context: null };
 	}
-	const rawStats = _runSkillkitJson("stats") as Record<string, unknown> | null;
-	const rawHealth = _runSkillkitJson("health") as Record<string, unknown> | null;
-	const rawBurn = _runSkillkitJson("burn") as unknown[] | null;
-	const rawContext = _runSkillkitJson("context") as Record<string, unknown> | null;
+	const rawStats = runSkillkitJson(["stats"]) as Record<string, unknown> | null;
+	const rawHealth = runSkillkitJson(["health"]) as Record<string, unknown> | null;
+	const rawBurn = runSkillkitJson(["burn"]) as unknown[] | null;
+	const rawContext = runSkillkitJson(["context"]) as Record<string, unknown> | null;
 
 	let stats = rawStats as SkillkitData["stats"];
 	if (stats?.top_skills) {
@@ -139,7 +106,6 @@ function loadSkillkitData(): SkillkitData {
 }
 
 const HOME = homedir();
-const IS_WIN = platform() === "win32";
 const TAG_FILE = join(HOME, ".claude", "agentfiles-conversations.json");
 const ENRICH_CACHE = join(HOME, ".skillkit", "enrichment-cache.json");
 const LOCK_PATH = join(HOME, ".agents", ".skill-lock.json");
@@ -188,45 +154,23 @@ function getConfig(): vscode.WorkspaceConfiguration {
 	return vscode.workspace.getConfiguration("agentfiles");
 }
 
-function buildPath(): string {
-	const extra: string[] = IS_WIN
-		? [
-				join(process.env.APPDATA || join(HOME, "AppData", "Roaming"), "npm"),
-				join(HOME, ".bun", "bin"),
-				join(HOME, "AppData", "Local", "npm"),
-		  ]
-		: [
-				"/usr/local/bin",
-				"/opt/homebrew/bin",
-				join(HOME, ".local", "bin"),
-				join(HOME, ".bun", "bin"),
-		  ];
-	const nvmDir = IS_WIN
-		? join(HOME, "AppData", "Roaming", "nvm")
-		: join(HOME, ".nvm", "versions", "node");
-	try {
-		for (const d of readdirSync(nvmDir)) {
-			extra.push(IS_WIN ? join(nvmDir, d) : join(nvmDir, d, "bin"));
-		}
-	} catch {}
-	return [...extra, process.env.PATH || ""].join(delimiter);
-}
-
 function getInstalledNames(): Set<string> {
 	const names = new Set<string>();
-	if (!existsSync(LOCK_PATH)) return names;
-	try {
-		const data = JSON.parse(readFileSync(LOCK_PATH, "utf-8"));
-		if (data.skills) {
-			for (const name of Object.keys(data.skills)) {
-				names.add(name);
+	const projectRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+	const paths = [LOCK_PATH, ...(projectRoot ? [join(projectRoot, ".agents", ".skill-lock.json")] : [])];
+	for (const path of paths) {
+		if (!existsSync(path)) continue;
+		try {
+			const data = JSON.parse(readFileSync(path, "utf-8"));
+			if (data.skills) {
+				for (const name of Object.keys(data.skills)) names.add(name);
 			}
-		}
-	} catch {}
+		} catch {}
+	}
 	return names;
 }
 
-const POPULAR_CACHE = join(HOME, ".skillkit", "marketplace-popular.json");
+const POPULAR_CACHE = join(HOME, ".agentfiles", "marketplace-popular-vscode.json");
 
 // Disk-cached wrapper over src/marketplace getPopularSkills: serve the cache instantly,
 // refresh in the background. The one-off fetch and slug logic live in src/marketplace.
@@ -241,38 +185,49 @@ async function marketplacePopular(): Promise<MarketplaceSkill[]> {
 				return cached;
 			}
 		}
-	} catch {}
+	} catch {
+		rmSync(POPULAR_CACHE, { force: true });
+	}
 	return refreshPopularCache();
 }
 
 async function refreshPopularCache(): Promise<MarketplaceSkill[]> {
-	const sorted = await getPopularSkills();
+	const projectRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+	const sorted = await getPopularSkills(projectRoot);
+	const temporaryPath = `${POPULAR_CACHE}.${randomUUID()}.tmp`;
 	try {
-		writeFileSync(POPULAR_CACHE, JSON.stringify(sorted), "utf-8");
-	} catch {}
+		mkdirSync(dirname(POPULAR_CACHE), { recursive: true });
+		writeFileSync(temporaryPath, JSON.stringify(sorted), "utf-8");
+		renameSync(temporaryPath, POPULAR_CACHE);
+	} catch {
+		rmSync(temporaryPath, { force: true });
+	}
 	return sorted;
 }
 
 async function marketplaceSearch(query: string): Promise<MarketplaceSkill[]> {
 	if (query.length < 2) return [];
-	return searchSkills(query);
+	return searchSkills(query, vscode.workspace.workspaceFolders?.[0]?.uri.fsPath);
 }
 
 async function marketplaceInstall(
 	source: string,
 	agents: string[],
-	runner: "auto" | "npx" | "bunx",
 	global: boolean,
 	skillName?: string,
+	skillId?: string,
 ): Promise<{ success: boolean; output: string }> {
-	return installSkillAsync(source, agents, { runner, globalInstall: global, skillName });
+	const projectRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+	return installSkillAsync(source, agents, {
+		globalInstall: global || !projectRoot,
+		projectRoot,
+		skillName,
+		skillId,
+	});
 }
 
-async function marketplaceUninstall(
-	skillName: string,
-	runner: "auto" | "npx" | "bunx",
-): Promise<{ success: boolean; output: string }> {
-	return removeSkillAsync(skillName, runner);
+async function marketplaceUninstall(skillName: string): Promise<{ success: boolean; output: string }> {
+	return removeSkillAsync(skillName, vscode.workspace.workspaceFolders?.[0]?.uri.fsPath);
 }
 
 function sanitizeFilename(name: string): string {
@@ -1032,9 +987,7 @@ class AgentfilesStore {
 				const id = msg.id as string;
 				const skill = this._skills.get(id);
 				if (!skill) break;
-				const cfg = getConfig();
-				const runner = cfg.get<"auto" | "npx" | "bunx">("packageRunner") ?? "auto";
-				const result = await removeSkillAsync(skill.name, runner);
+				const result = await removeSkillAsync(skill.name, vscode.workspace.workspaceFolders?.[0]?.uri.fsPath);
 				if (result.success) {
 					vscode.window.showInformationMessage(`Skill "${skill.name}" removed`);
 					this._skills.delete(id);
@@ -1054,23 +1007,15 @@ class AgentfilesStore {
 			case "marketplaceSelectSkill": {
 				const source = msg.source as string;
 				const name = msg.name as string;
+				const skillId = msg.skillId as string;
 				const installs = (msg.installs as number) ?? 0;
 				const installed = getInstalledNames().has(name);
-				post({ type: "marketplacePreview", source, name, installs, installed, content: null });
-				// Fetch content async
+				post({ type: "marketplacePreview", source, name, skillId, installs, installed, content: null });
 				try {
-					const repoRes = await fetch(`https://api.github.com/repos/${source}`);
-					const repoData = await repoRes.json() as { default_branch?: string };
-					const branch = repoData.default_branch || "main";
-					const treeRes = await fetch(`https://api.github.com/repos/${source}/git/trees/${branch}?recursive=1`);
-					const treeData = await treeRes.json() as { tree?: { path: string }[] };
-					const files = (treeData.tree || []).filter((t: { path: string }) => t.path.endsWith("/SKILL.md")).map((t: { path: string }) => t.path);
-					const match = files.find((p: string) => p.includes(name)) || files[0] || `skills/${name}/SKILL.md`;
-					const contentRes = await fetch(`https://raw.githubusercontent.com/${source}/${branch}/${match}`);
-					const content = await contentRes.text();
-					post({ type: "marketplacePreview", source, name, installs, installed, content });
+					const content = await fetchSkillContent(source, name, skillId);
+					post({ type: "marketplacePreview", source, name, skillId, installs, installed, content: content ?? "Could not load content." });
 				} catch {
-					post({ type: "marketplacePreview", source, name, installs, installed, content: "Could not load content." });
+					post({ type: "marketplacePreview", source, name, skillId, installs, installed, content: "Could not load content." });
 				}
 				break;
 			}
@@ -1085,13 +1030,12 @@ class AgentfilesStore {
 			case "marketplaceInstall": {
 				const source = msg.source as string;
 				const agents = (msg.agents as string[]) ?? [];
-				const cfg = getConfig();
-				const runner = cfg.get<"auto" | "npx" | "bunx">("packageRunner") ?? "auto";
 				const global = (msg.global as boolean) ?? false;
 				const skillName = msg.skillName as string | undefined;
+				const skillId = msg.skillId as string | undefined;
 
 				post({ type: "marketplaceInstallProgress", source, status: "installing" });
-				const result = await marketplaceInstall(source, agents, runner, global, skillName);
+				const result = await marketplaceInstall(source, agents, global, skillName, skillId);
 				post({ type: "marketplaceInstallResult", source, ...result });
 
 				if (result.success) {
@@ -1102,11 +1046,9 @@ class AgentfilesStore {
 
 			case "marketplaceUninstall": {
 				const skillName = msg.skillName as string;
-				const cfg = getConfig();
-				const runner = cfg.get<"auto" | "npx" | "bunx">("packageRunner") ?? "auto";
 
 				post({ type: "marketplaceInstallProgress", skillName, status: "removing" });
-				const result = await marketplaceUninstall(skillName, runner);
+				const result = await marketplaceUninstall(skillName);
 				post({ type: "marketplaceUninstallResult", skillName, ...result });
 
 				if (result.success) {
@@ -1308,5 +1250,3 @@ class AgentfilesStore {
 		}, debounceMs);
 	}
 }
-
-
